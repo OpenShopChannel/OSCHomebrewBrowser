@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
 	initialise_reset_button();
 	WPAD_SetPowerButtonCallback(WiimotePowerPressed);
 	
-	current_time = time(0);
+	current_time = time(NULL);
 	sprintf(setting_last_boot, "%li", current_time); // bug fix
 	//add_to_log("Time is %li", current_time);
 	
