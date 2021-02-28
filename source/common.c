@@ -21,6 +21,7 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/dir.h>
+#include <sys/param.h>
 #include <unistd.h>
 #include <wiiuse/wpad.h>
 #include <zlib.h>
@@ -207,6 +208,19 @@ void testing() {
 	sleep(3);
 }
 
+char* get_error_msg(s32 error_code) {
+	switch (error_code) {
+		case -6:
+			return "Are you connected to the internet? Try running a connection test in the Wii System Settings.";
+			break;
+		case -81:
+			return "Is your SD card write-locked? Is the server in settings.xml not set to 0?";
+			break;
+		default:
+			return "Undocumented error code. Please contact us on our Twitter or Discord.";
+	}
+}
+
 static void reset_called() {
 	reset = 1;
 }
@@ -224,7 +238,7 @@ static void *run_reset_thread(void *arg) {
 		if (WPAD_ButtonsHeld(0) & WPAD_BUTTON_2 || PAD_ButtonsDown(0) & PAD_BUTTON_X) {
 			setting_repo_revert = true;
 			setting_repo = 0;
-			printf("\nReverting to CodeMii.com repository.\n");
+			printf("\nReverting to OSCWii.org repository.\n");
 			//add_to_log("Reverting to CodeMii.com repository.");
 		}
 		if (WPAD_ButtonsHeld(0) & WPAD_BUTTON_B || PAD_ButtonsDown(0) & PAD_BUTTON_B) {
@@ -1348,10 +1362,10 @@ static void *run_rating_thread(void *arg) {
 	strcat(http_request, " HTTP/1.0\r\nHost: ");
 	if (setting_repo == 0) {
 		if (codemii_backup == false) {
-			strcat(http_request, "www.codemii.com");
+			strcat(http_request, "hbb1.oscwii.org");
 		}
 		else {
-			strcat(http_request, "www2.codemii.com");
+			strcat(http_request, "hbb2.oscwii.org");
 		}
 	}
 	else {
@@ -1466,10 +1480,10 @@ static void *run_update_rating_thread(void *arg) {
 	strcat(http_request, " HTTP/1.0\r\nHost: ");
 	if (setting_repo == 0) {
 		if (codemii_backup == false) {
-			strcat(http_request, "www.codemii.com");
+			strcat(http_request, "hbb1.oscwii.org");
 		}
 		else {
-			strcat(http_request, "www2.codemii.com");
+			strcat(http_request, "hbb2.oscwii.org");
 		}
 	}
 	else {
@@ -3026,10 +3040,10 @@ bool check_wifi() {
 }
 
 void initialise_codemii() {
-	printf("Requesting IP address of www.codemii.com... ");
+	printf("Requesting IP address of hbb1.oscwii.org... ");
 	initializedns();
 	//IP_ADDRESS = getipbynamecached("test");
-	IP_ADDRESS = getipbynamecached("www.codemii.com");
+	IP_ADDRESS = getipbynamecached("hbb1.oscwii.org");
 	
 	if (IP_ADDRESS == 0) {
 		printf("Failed, using stored IP address\n");
@@ -3041,7 +3055,7 @@ void initialise_codemii() {
 }
 
 void initialise_codemii_backup() {
-	printf("Requesting IP address of www2.codemii.com... ");
+	printf("Requesting IP address of hbb2.oscwii.org... ");
 	hostname_ok = true;
 	if (setting_server == true) {
 		initializedns();
@@ -3525,10 +3539,10 @@ void add_to_stats() {
 	strcat(http_request, " HTTP/1.0\r\nHost: ");
 	if (setting_repo == 0) {
 		if (codemii_backup == false) {
-			strcat(http_request, "www.codemii.com");
+			strcat(http_request, "hbb1.oscwii.org");
 		}
 		else {
-			strcat(http_request, "www2.codemii.com");
+			strcat(http_request, "hbb2.oscwii.org");
 		}
 	}
 	else {
@@ -3565,10 +3579,10 @@ void apps_check() {
 		//strcat(http_request, " HTTP/1.0\r\n\r\n");
 		
 		if (codemii_backup == false) {
-			strcat(http_request," HTTP/1.0\r\nHost: www.codemii.com\r\nCache-Control: no-cache\r\n\r\n");
+			strcat(http_request," HTTP/1.0\r\nHost: hbb1.oscwii.org\r\nCache-Control: no-cache\r\n\r\n");
 		}
 		else {
-			strcat(http_request," HTTP/1.0\r\nHost: www2.codemii.com\r\nCache-Control: no-cache\r\n\r\n");
+			strcat(http_request," HTTP/1.0\r\nHost: hbb2.oscwii.org\r\nCache-Control: no-cache\r\n\r\n");
 		}
 		
 		write_http_reply(main_server, http_request);
@@ -3583,7 +3597,7 @@ void apps_check() {
 		while (offset < (BUFFER_SIZE - 1)) {
 			char *offset_buf = buf + offset;
 			if ((bytes_read = net_read(main_server, offset_buf, BUFFER_SIZE - 1 - offset)) < 0) {
-				printf("Read error %i occurred. Retrying...\n", bytes_read);
+				printf("Read error %i occurred in apps_check. Retrying...\n%s\n", bytes_read, get_error_msg(bytes_read));
 				net_close(main_server);
 				sleep(1);
 			} else if (bytes_read == 0) {
@@ -3604,7 +3618,7 @@ void apps_check() {
 					
 					// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
 					if (strstr(cmd_line, "HTTP/1.1 4") || strstr(cmd_line, "HTTP/1.1 5")) {
-						printf("The server appears to be having an issue. Retrying...\n");
+						printf("The server appears to be having an issue (apps_check). Retrying...\n");
 						net_close(main_server);
 						sleep(1);
 					}
@@ -3738,10 +3752,10 @@ void repo_check() {
 	//strcat(http_request, " HTTP/1.0\r\n\r\n");
 	
 	if (codemii_backup == false) {
-		strcat(http_request," HTTP/1.0\r\nHost: www.codemii.com\r\nCache-Control: no-cache\r\n\r\n");
+		strcat(http_request," HTTP/1.0\r\nHost: hbb1.oscwii.org\r\nCache-Control: no-cache\r\n\r\n");
 	}
 	else {
-		strcat(http_request," HTTP/1.0\r\nHost: www2.codemii.com\r\nCache-Control: no-cache\r\n\r\n");
+		strcat(http_request," HTTP/1.0\r\nHost: hbb2.oscwii.org\r\nCache-Control: no-cache\r\n\r\n");
 	}
 	
 	write_http_reply(main_server, http_request);
@@ -3754,7 +3768,7 @@ void repo_check() {
 	while (offset < (BUFFER_SIZE - 1)) {
 		char *offset_buf = buf + offset;
 		if ((bytes_read = net_read(main_server, offset_buf, BUFFER_SIZE - 1 - offset)) < 0) {
-			printf("Read error %i occurred. Retrying...\n", bytes_read);
+			printf("Read error %i occurred in repo_check. Retrying...\n%s\n", bytes_read, get_error_msg(bytes_read));
 			net_close(main_server);
 			sleep(1);
 		} else if (bytes_read == 0) {
@@ -3775,7 +3789,7 @@ void repo_check() {
 				
 				// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
 				if (strstr(cmd_line, "HTTP/1.1 4") || strstr(cmd_line, "HTTP/1.1 5")) {
-					printf("The server appears to be having an issue. Retrying...\n");
+					printf("The server appears to be having an issue (repo_check). Retrying...\n");
 					net_close(main_server);
 					sleep(1);
 				}
@@ -4343,10 +4357,10 @@ s32 server_connect(int repo_bypass) {
 	if (setting_repo == 0 || repo_bypass == 1) {
 		if (hostname_ok == true) {
 			if (codemii_backup == false) {
-				connect_addr.sin_addr.s_addr= getipbynamecached("www.codemii.com");
+				connect_addr.sin_addr.s_addr= getipbynamecached("hbb1.oscwii.org");
 			}
 			else {
-				connect_addr.sin_addr.s_addr= getipbynamecached("www2.codemii.com");
+				connect_addr.sin_addr.s_addr= getipbynamecached("hbb2.oscwii.org");
 			}
 		}
 		else {
@@ -5017,7 +5031,7 @@ s32 request_file(s32 server, FILE *f) {
 		
 		// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
 		if (strstr(temp_tok, "HTTP/1.1 4") || strstr(temp_tok, "HTTP/1.1 5")) {
-			printf("The server appears to be having an issue. Retrying...\n");
+			printf("The server appears to be having an issue (request_file). Retrying...\n");
 			return -1;
 		}
 		
@@ -5135,10 +5149,10 @@ s32 request_list_file(char *file_path, char *path) {
 		strcat(http_request, " HTTP/1.0\r\nHost: ");
 		if (setting_repo == 0) {
 			if (codemii_backup == false) {
-				strcat(http_request, "www.codemii.com");
+				strcat(http_request, "hbb1.oscwii.org");
 			}
 			else {
-				strcat(http_request, "www2.codemii.com");
+				strcat(http_request, "hbb2.oscwii.org");
 			}
 		}
 		else {
@@ -5241,10 +5255,10 @@ s32 create_and_request_file(char* path1, char* appname, char *filename) {
 		strcat(http_request, " HTTP/1.0\r\nHost: ");
 		if (setting_repo == 0) {
 			if (codemii_backup == false) {
-				strcat(http_request, "www.codemii.com");
+				strcat(http_request, "hbb1.oscwii.org");
 			}
 			else {
-				strcat(http_request, "www2.codemii.com");
+				strcat(http_request, "hbb2.oscwii.org");
 			}
 		}
 		else {

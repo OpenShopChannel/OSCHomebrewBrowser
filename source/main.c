@@ -305,7 +305,7 @@ int main(int argc, char **argv) {
 		
 		if (www_passed == false) {
 			codemii_backup = true;
-			printf("\nCodeMii appears to be having issues, using CodeMii Backup Server.\n\n");
+			printf("\nOSCWii appears to be having issues, using OSCWii Backup Server.\n\n");
 			initialise_codemii_backup();
 			printf("Attempting to connect to server... ");
 			
@@ -329,7 +329,7 @@ int main(int argc, char **argv) {
 		suspend_www_thread();
 		
 		if (www_passed == false) {
-			die("\nReturning you back to HBC. Please check to see if www.codemii.com and www2.codemii.com are working.\n"); 
+			die("\nReturning you back to HBC. Please check to see if hbb1.oscwii.org and hbb2.oscwii.org are working.\n");
 		}
 		
 		printf("Connection established\n"); 
@@ -339,7 +339,7 @@ int main(int argc, char **argv) {
 	else if (setting_server == true) { // Secondary server setting enabled
 		codemii_backup = true;
 		initialise_codemii_backup();
-		printf("Attempting to connect to CodeMii Secondary server... ");
+		printf("Attempting to connect to OSCWii Secondary server... ");
 		
 		int main_retries = 0;
 		while (www_passed != true && main_retries < 3) {
@@ -360,7 +360,7 @@ int main(int argc, char **argv) {
 		suspend_www_thread();
 		
 		if (www_passed == false) {
-			die("\nReturning you back to HBC. Please check to see if www2.codemii.com is working.\n"); 
+			die("\nReturning you back to HBC. Please check to see if hbb2.oscwii.org is working.\n");
 		}
 		
 		printf("Connection established\n"); 
