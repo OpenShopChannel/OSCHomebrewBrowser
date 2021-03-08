@@ -4992,8 +4992,17 @@ s32 request_list() {
 					
 					// Description
 					else if (line_number == 6) {
+						// Truncate description to fit under 335 characters
+						size_t len = strlen(cmd_line);
+						if (len > 335)
+						{
+							// Remove last two characters
+							cmd_line[len + 335 - len ] = '\0';
+						}
+						
 						strncpy(homebrew_list[array_count].app_description, cmd_line, strlen(cmd_line) - hbb_string_len);
 						homebrew_list[array_count].app_description[strlen(cmd_line) - hbb_string_len] = '\0';
+						
 						//printf("%s\n", homebrew_list[array_count].app_description);
 						line_number = 0;
 						array_count++;
