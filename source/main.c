@@ -1005,8 +1005,8 @@ int main(int argc, char **argv) {
 		
 		// Dpad up / down
 		if (setting_wiiside == false) {
-			if ((held & WPAD_BUTTON_DOWN || held_gc & PAD_BUTTON_DOWN) && ((strlen(homebrew_list[finish+1].name) > 1 && hbb_app_about == false && updating == -1 && in_menu == false && in_help == false && show_updated_apps == false) || (show_updated_apps == true && finish_updated+1 < updated_apps_count) || (select_repo == true && finish_updated+1 < repo_count))) { ypos-= 2; }
-			if ((held & WPAD_BUTTON_UP || held_gc & PAD_BUTTON_UP) && ((show_updated_apps == false && select_repo == false && ypos <= 140) || ((show_updated_apps == true || select_repo == true) && ypos <= 180)) && hbb_app_about == false && updating == -1 && ((in_menu == false && select_repo == false) || (in_menu == true && select_repo == true)) && in_help == false) { ypos+= 2; }
+			if ((held & WPAD_BUTTON_DOWN || held_gc & PAD_BUTTON_DOWN) && ((strlen(homebrew_list[finish+1].name) > 1 && hbb_app_about == false && updating == -1 && in_menu == false && in_help == false && show_updated_apps == false) || (show_updated_apps == true && finish_updated+1 < updated_apps_count) || (select_repo == true && finish_updated+1 < repo_count))) { ypos -= 4; }
+			if ((held & WPAD_BUTTON_UP || held_gc & PAD_BUTTON_UP) && ((show_updated_apps == false && select_repo == false && ypos <= 140) || ((show_updated_apps == true || select_repo == true) && ypos <= 180)) && hbb_app_about == false && updating == -1 && ((in_menu == false && select_repo == false) || (in_menu == true && select_repo == true)) && in_help == false) { ypos += 4; }
 		}
 		
 		// Scrolling by B button
