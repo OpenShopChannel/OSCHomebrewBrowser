@@ -12,6 +12,7 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #define _COMMON_H_
 
 #include <ogcsys.h>
+#include "GRRLIB/GRRLIB.h"
 
 #define COLOUR_WHITE 0xFFFFFF
 #define COLOUR_RED 0xFF0000
@@ -25,12 +26,12 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #define FONTSIZE_MEDIUM 48
 #define FONTSIZE_LARGE 72
 
-const char *CRLF;
-const u32 CRLF_LENGTH;
-char esid[50];
-int xfb_height;
+extern const char *CRLF;
+extern const u32 CRLF_LENGTH;
+extern char esid[50];
+extern int xfb_height;
 
-char rootdir[10];
+extern char rootdir[10];
 
 u8 initialise_reset_button();
 u8 initialise_www();
@@ -64,64 +65,64 @@ void initialise_network();
 bool check_wifi();
 extern u32 net_gethostip();
 
-bool codemii_backup;
-bool www_passed;
+extern bool codemii_backup;
+extern bool www_passed;
 
-int category_old_selection;
+extern int category_old_selection;
 
-int download_in_progress;
-int extract_in_progress;
-int delete_in_progress;
-bool get_rating_in_progress;
-char rating_number[5];
-int selected_app;
-int total_list_count;
-int timeout_counter;
+extern int download_in_progress;
+extern int extract_in_progress;
+extern int delete_in_progress;
+extern bool get_rating_in_progress;
+extern char rating_number[5];
+extern int selected_app;
+extern int total_list_count;
+extern int timeout_counter;
 
-int download_part_size;
-long download_progress_counter;
-int download_progress_number;
-long remote_hb_size;
-char update_text[1000];
+extern int download_part_size;
+extern long download_progress_counter;
+extern int download_progress_number;
+extern long remote_hb_size;
+extern char update_text[1000];
 
-char temp_name[100];
+extern char temp_name[100];
 
-int error_number;
-bool cancel_download;
-bool cancel_delete;
+extern int error_number;
+extern bool cancel_download;
+extern bool cancel_delete;
 
-bool sd_card_update;
-long long sd_card_free;
+extern bool sd_card_update;
+extern long long sd_card_free;
 
-int download_icon;
-bool in_menu;
+extern int download_icon;
+extern bool in_menu;
 
-bool setting_check_size;
-bool setting_sd_card;
-bool setting_hide_installed;
-bool setting_get_rating; 
-bool setting_music;
-bool setting_online;
-bool setting_rumble;
-bool setting_update_icon;
-bool setting_tool_tip;
-char setting_last_boot[14];
-bool setting_show_updated;
-bool setting_prompt_cancel;
-bool setting_power_off;
-bool setting_use_sd;
-int setting_repo;
-int setting_sort;
-int setting_category;
-bool setting_disusb;
-bool setting_dischar;
-bool setting_wiiside;
-bool setting_update;
-bool setting_server;
+extern bool setting_check_size;
+extern bool setting_sd_card;
+extern bool setting_hide_installed;
+extern bool setting_get_rating; 
+extern bool setting_music;
+extern bool setting_online;
+extern bool setting_rumble;
+extern bool setting_update_icon;
+extern bool setting_tool_tip;
+extern char setting_last_boot[14];
+extern bool setting_show_updated;
+extern bool setting_prompt_cancel;
+extern bool setting_power_off;
+extern bool setting_use_sd;
+extern int setting_repo;
+extern int setting_sort;
+extern int setting_category;
+extern bool setting_disusb;
+extern bool setting_dischar;
+extern bool setting_wiiside;
+extern bool setting_update;
+extern bool setting_server;
 
-bool cancel_confirmed;
+extern bool cancel_confirmed;
 
-bool downloading_icons;
+extern bool downloading_icons;
 
 void load_no_manage_list();
 void save_no_manage_list();
@@ -137,27 +138,27 @@ void sort_by_downloads(bool min_to_max);
 void sort_by_date(bool min_to_max);
 void sort_by_rating(bool min_to_max);
 void sort_by_name (bool min_to_max);
-int sort_up_down;
+extern int sort_up_down;
 
-int updating;
-int new_updating;
-int updating_total_size;
-int updating_part_size;
-long updating_current_size;
-bool changing_cat;
-bool exiting;
-bool hbb_app_about;
-bool download_icon_sleeping;
-int repo_count;
+extern int updating;
+extern int new_updating;
+extern int updating_total_size;
+extern int updating_part_size;
+extern long updating_current_size;
+extern bool changing_cat;
+extern bool exiting;
+extern bool hbb_app_about;
+extern bool download_icon_sleeping;
+extern int repo_count;
 
-int update_xml;
-char testy[200];
+extern int update_xml;
+extern char testy[200];
 
-bool show_updated_apps;
-int updated_apps_count;
+extern bool show_updated_apps;
+extern int updated_apps_count;
 
-bool list_received;
-int no_manage_count;
+extern bool list_received;
+extern int no_manage_count;
 
 void download_queue_size();
 void add_to_stats();
@@ -233,8 +234,8 @@ struct homebrew_struct {
 
 struct text_struct {
 	int text;
-	void *str_name;
-	void *str_short_description;	
+	GRRLIB_texImg *str_name;
+	GRRLIB_texImg *str_short_description;	
 };
 
 struct sort_homebrew_struct {
@@ -257,36 +258,36 @@ struct repo_struct {
 	void *str_text;	
 };
 
-struct repo_struct repo_list[200];
+extern struct repo_struct repo_list[200];
 
-struct updated_apps_struct updated_apps_list[1600];
+extern struct updated_apps_struct updated_apps_list[1600];
 
 // List to show
-struct homebrew_struct homebrew_list[1600];
-struct text_struct text_list[1600];
+extern struct homebrew_struct homebrew_list[1600];
+extern struct text_struct text_list[1600];
 
-struct homebrew_struct emulators_list[300];
-struct homebrew_struct games_list[600];
-struct homebrew_struct media_list[300];
-struct homebrew_struct utilities_list[300];
-struct homebrew_struct demos_list[300];
+extern struct homebrew_struct emulators_list[300];
+extern struct homebrew_struct games_list[600];
+extern struct homebrew_struct media_list[300];
+extern struct homebrew_struct utilities_list[300];
+extern struct homebrew_struct demos_list[300];
 
 // Total list
-struct homebrew_struct total_list[600];
+extern struct homebrew_struct total_list[600];
 
 // Temp list
-struct sort_homebrew_struct temp_list[600];
-struct homebrew_struct temp_list2[600];
-struct sort_homebrew_struct temp1_list[2];
+extern struct sort_homebrew_struct temp_list[600];
+extern struct homebrew_struct temp_list2[600];
+extern struct sort_homebrew_struct temp1_list[2];
 
 // Temp list to use to download/extract/delete
-struct homebrew_struct store_homebrew_list[2];
+extern struct homebrew_struct store_homebrew_list[2];
 
 // Folders exist list
-struct sort_homebrew_struct folders_list[500];
+extern struct sort_homebrew_struct folders_list[500];
 
 // Apps to not manage
-struct sort_homebrew_struct no_manage_list[500];
+extern struct sort_homebrew_struct no_manage_list[500];
 
 int array_length (struct homebrew_struct array[400]);
 

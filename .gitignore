@@ -1,6 +1,4 @@
-# I hope this is how you do a gitignore properly
-/build
+
+build
 *.dol
 *.elf
-source/gfx/*.h
-source/gfx/*.c

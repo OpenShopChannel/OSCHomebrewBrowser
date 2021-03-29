@@ -225,7 +225,9 @@ static int do_extract_currentfile(unzFile uf,const int* popt_extract_without_pat
 						printf("error %d with zipfile in unzReadCurrentFile\n",err);
 						break;
 					}
-					if (err>0)
+					else if (err>0)
+					{
+
 						if (fwrite(buf,err,1,fout)!=1)
 						{
 							printf("error in writing extracted file\n");
@@ -248,6 +250,7 @@ static int do_extract_currentfile(unzFile uf,const int* popt_extract_without_pat
 						if (hbb_updating == true && cancel_extract == true) {
 							err = -1;
 						}
+					}
 						
 				}
 				while (err>0);
@@ -330,7 +333,9 @@ int extractZip(unzFile uf,int opt_extract_without_path,int opt_overwrite,const c
 
     err = unzGetGlobalInfo (uf,&gi);
     if (err!=UNZ_OK)
+    {
         printf("error %d with zipfile in unzGetGlobalInfo \n",err);
+    }
 		
 	unzip_file_count = gi.number_entry;
 	
