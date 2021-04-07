@@ -11,15 +11,15 @@ int extractZipOnefile(unzFile uf,const char* filename,int opt_extract_without_pa
 int makedir(char *newdir);
 int zipInfo(unzFile uf);
 
-int zip_size;
-long zip_progress;
-long extract_part_size;
-bool cancel_extract;
-bool hbb_updating;
-int unzip_file_counter;
-int unzip_file_count;
-char no_unzip_list[10][300];
-int no_unzip_count;
+extern int zip_size;
+extern long zip_progress;
+extern long extract_part_size;
+extern bool cancel_extract;
+extern bool hbb_updating;
+extern int unzip_file_counter;
+extern int unzip_file_count;
+extern char no_unzip_list[10][300];
+extern int no_unzip_count;
 
 #ifdef __cplusplus
 }
