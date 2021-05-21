@@ -3634,7 +3634,7 @@ void apps_check() {
 		while (offset < (BUFFER_SIZE - 1)) {
 			char *offset_buf = buf + offset;
 			if ((bytes_read = net_read(main_server, offset_buf, BUFFER_SIZE - 1 - offset)) < 0) {
-				printf("Read error %i occurred in apps_check. Retrying...\n%s\n", bytes_read, get_error_msg(bytes_read));
+				printf("%s\nError code %i in apps_check\n\n", get_error_msg(bytes_read), bytes_read);
 				net_close(main_server);
 				sleep(1);
 			} else if (bytes_read == 0) {
@@ -3805,7 +3805,7 @@ void repo_check() {
 	while (offset < (BUFFER_SIZE - 1)) {
 		char *offset_buf = buf + offset;
 		if ((bytes_read = net_read(main_server, offset_buf, BUFFER_SIZE - 1 - offset)) < 0) {
-			printf("Read error %i occurred in repo_check. Retrying...\n%s\n", bytes_read, get_error_msg(bytes_read));
+			printf("%s\nError code %i in repo_check\n\n", get_error_msg(bytes_read), bytes_read);
 			net_close(main_server);
 			sleep(1);
 		} else if (bytes_read == 0) {

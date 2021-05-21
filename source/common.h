@@ -15,9 +15,12 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "GRRLIB/GRRLIB.h"
 
 #define COLOUR_WHITE 0xFFFFFF
-#define COLOUR_RED 0xFF0000
-#define COLOUR_GREEN 0x00FF00
-#define COLOUR_BLUE 0x339bcf
+#define COLOUR_RED 0xED349F
+#define COLOUR_GREEN 0x34ED90
+#define COLOUR_BLUE 0x34BEED
+
+#define TEXT_COLOUR_PRIMARY 0x212121
+#define TEXT_COLOUR_SECONDARY 0x666666
 
 #define FONTSIZE_SMALLER 16
 #define FONTSIZE_SMALL 18
@@ -100,7 +103,7 @@ extern bool in_menu;
 extern bool setting_check_size;
 extern bool setting_sd_card;
 extern bool setting_hide_installed;
-extern bool setting_get_rating; 
+extern bool setting_get_rating;
 extern bool setting_music;
 extern bool setting_online;
 extern bool setting_rumble;
@@ -207,7 +210,7 @@ struct homebrew_struct {
 	char boot_ext[10];
 	bool boot_bak;
 	bool no_manage;
-	
+
 	// About
 	bool about_loaded;
 	char app_name[100];
@@ -219,35 +222,35 @@ struct homebrew_struct {
 	char app_downloads[10];
 	char app_controllers[20];
 	int app_rating;
-	
+
 	char user_rating[3];
-	
+
 	// Dynamic text stored
 	//void *str_name;
 	//void *str_short_description;
-	
+
 	// Icon image
 	int file_found;
 	unsigned char *content;
-	
+
 };
 
 struct text_struct {
 	int text;
 	GRRLIB_texImg *str_name;
-	GRRLIB_texImg *str_short_description;	
+	GRRLIB_texImg *str_short_description;
 };
 
 struct sort_homebrew_struct {
 	char name[100];
-	int app_downloads;	
+	int app_downloads;
 	char app_name[100];
 };
 
 struct updated_apps_struct {
 	//char time[15];
 	char text[200];
-	void *str_text;	
+	void *str_text;
 };
 
 struct repo_struct {
@@ -255,7 +258,7 @@ struct repo_struct {
 	char domain[100];
 	char list_file[200];
 	char apps_dir[100];
-	void *str_text;	
+	void *str_text;
 };
 
 extern struct repo_struct repo_list[200];

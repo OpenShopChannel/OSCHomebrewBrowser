@@ -60,7 +60,6 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "background_png.h"
 #include "blue_light_png.h"
 #include "blue_light_small_png.h"
-#include "blue_dark_png.h"
 #include "blue_dark_small_png.h"
 #include "blue_dark_small2_png.h"
 #include "no_image_png.h"
@@ -263,7 +262,7 @@ int main(int argc, char **argv) {
 	//add_to_log("Time is %li", current_time);
 
 	printf("\x1b[2;0H");
-	printf("Homebrew Browser v0.3.9e\n");
+	printf("OSC Homebrew Browser v0.4.0e\n");
 
 	u32 temp_esid;
 	ES_GetDeviceID(&temp_esid);
@@ -335,7 +334,7 @@ int main(int argc, char **argv) {
 		codemii_backup = true;
 		initialise_codemii_backup();
 		printf("Attempting to connect to OSCWii Secondary server... ");
-		
+
 		int main_retries = 0;
 		while (www_passed != true && main_retries < 3) {
 			initialise_www();
@@ -453,19 +452,19 @@ int main(int argc, char **argv) {
 	suspend_reset_thread();
 
 	// Constant Text
-	GRRLIB_texImg *str_author = GRRLIB_TextToTexture("Author:", FONTSIZE_SMALLER, 0x575757);
-	GRRLIB_texImg *str_version = GRRLIB_TextToTexture("Version:", FONTSIZE_SMALLER, 0x575757);
-	GRRLIB_texImg *str_downloads= GRRLIB_TextToTexture("Downloads:", FONTSIZE_SMALLER, 0x575757);
-	GRRLIB_texImg *str_size= GRRLIB_TextToTexture("Size:", FONTSIZE_SMALLER, 0x575757);
-	GRRLIB_texImg *str_rating = GRRLIB_TextToTexture("Rating:", FONTSIZE_SMALLER, 0x575757);
-	GRRLIB_texImg *str_date = GRRLIB_TextToTexture("Date:", FONTSIZE_SMALLER, 0x575757);
-	GRRLIB_texImg *str_controllers = GRRLIB_TextToTexture("Controllers:", FONTSIZE_SMALLER, 0x575757);
-	GRRLIB_texImg *str_your_rating = GRRLIB_TextToTexture("Your Rating:", FONTSIZE_SMALLER, 0x575757);
+	GRRLIB_texImg *str_author = GRRLIB_TextToTexture("Author:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
+	GRRLIB_texImg *str_version = GRRLIB_TextToTexture("Version:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
+	GRRLIB_texImg *str_downloads= GRRLIB_TextToTexture("Downloads:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
+	GRRLIB_texImg *str_size= GRRLIB_TextToTexture("Size:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
+	GRRLIB_texImg *str_rating = GRRLIB_TextToTexture("Rating:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
+	GRRLIB_texImg *str_date = GRRLIB_TextToTexture("Date:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
+	GRRLIB_texImg *str_controllers = GRRLIB_TextToTexture("Controllers:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
+	GRRLIB_texImg *str_your_rating = GRRLIB_TextToTexture("Your Rating:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
 
-	GRRLIB_texImg *str_rate_app = GRRLIB_TextToTexture("Please select a rating:", FONTSIZE_SMALL, 0x575757);
+	GRRLIB_texImg *str_rate_app = GRRLIB_TextToTexture("Please select a rating:", FONTSIZE_SMALL, TEXT_COLOUR_PRIMARY);
 
-	GRRLIB_texImg *str_sdhc = GRRLIB_TextToTexture("SDHC:", FONTSIZE_SMALLER, 0x575757);
-	GRRLIB_texImg *str_sdhc_yes = GRRLIB_TextToTexture("Yes", FONTSIZE_SMALLER, COLOUR_BLUE);
+	GRRLIB_texImg *str_sdhc = GRRLIB_TextToTexture("SDHC:", FONTSIZE_SMALLER, TEXT_COLOUR_PRIMARY);
+	GRRLIB_texImg *str_sdhc_yes = GRRLIB_TextToTexture("Yes", FONTSIZE_SMALLER, COLOUR_GREEN);
 	GRRLIB_texImg *str_sdhc_no = GRRLIB_TextToTexture("No", FONTSIZE_SMALLER, COLOUR_RED);
 
 
@@ -616,7 +615,6 @@ int main(int argc, char **argv) {
 	GRRLIB_texImg *background_img=GRRLIB_LoadTexture(background_png);
 	GRRLIB_texImg *blue_light_img=GRRLIB_LoadTexture(blue_light_png);
 	GRRLIB_texImg *blue_light_small_img=GRRLIB_LoadTexture(blue_light_small_png);
-	GRRLIB_texImg *blue_dark_img=GRRLIB_LoadTexture(blue_dark_png);
 	GRRLIB_texImg *blue_dark_small_img=GRRLIB_LoadTexture(blue_dark_small_png);
 	GRRLIB_texImg *blue_dark_small2_img=GRRLIB_LoadTexture(blue_dark_small2_png);
 	GRRLIB_texImg *date_img=GRRLIB_LoadTexture(date_png);
@@ -920,8 +918,8 @@ int main(int argc, char **argv) {
 
 				// Text list
 				if (text_list[c].text == 0) {
-					text_list[c].str_name = GRRLIB_TextToTexture(homebrew_list[c].app_name, FONTSIZE_SMALL, 0x575757);
-					text_list[c].str_short_description = GRRLIB_TextToTexture(homebrew_list[c].app_short_description, FONTSIZE_SMALL, 0x575757);
+					text_list[c].str_name = GRRLIB_TextToTexture(homebrew_list[c].app_name, FONTSIZE_SMALL, TEXT_COLOUR_PRIMARY);
+					text_list[c].str_short_description = GRRLIB_TextToTexture(homebrew_list[c].app_short_description, FONTSIZE_SMALL, TEXT_COLOUR_SECONDARY);
 					text_list[c].text = 1;
 
 					if (c > string_count) {
@@ -1226,7 +1224,7 @@ int main(int argc, char **argv) {
 				if (strlen(homebrew_list[(start + b)].name) >= 2 && strcmp(homebrew_list[(start + b)].name,"000") != 0) {
 					if (ir.y > 138 && ir.y < 437 && ir.x > 40 && ir.x < 536 && ir.y > (ypos + (76 * (start + b))) && ir.y < (ypos + (76 * (start + b)) + 64) && !(held & WPAD_BUTTON_B || pressed & WPAD_BUTTON_1 || held_gc & PAD_BUTTON_B)) {
 						doRumble = true;
-						GRRLIB_DrawImg(110, ypos + (76 * (start + b)), blue_dark_img, 0, 1, 1, 0xFFFFFFFF);
+						GRRLIB_DrawImg(110, ypos + (76 * (start + b)), blue_light_img, 0, 1, 1, 0xFFFFFFFF);
 
 						if ((pressed & WPAD_BUTTON_A || pressed & WPAD_BUTTON_2 || pressed_gc & PAD_BUTTON_A) && hbb_app_about == false) {
 							//GRRLIB_Printf(150,300,text_font1,0xFF000000,2,"Icon = %i\n", start + b);
@@ -1252,9 +1250,6 @@ int main(int argc, char **argv) {
 						/*if (held & WPAD_BUTTON_2 && hbb_app_about == false) {
 							current_app = start + b;
 						}*/
-					}
-					else {
-						GRRLIB_DrawImg(110, ypos + (76 * (start + b)), blue_light_img, 0, 1, 1, 0xFFFFFFFF);
 					}
 
 					if (homebrew_list[(start + b)].local_app_size > 0 && homebrew_list[(start + b)].in_download_queue == false) {
@@ -2004,10 +1999,10 @@ int main(int argc, char **argv) {
 		// About
 		if (hbb_app_about == true && updating == -1 && in_menu == false && in_help == false) {
 			if (update_about == true) {
-				str_res_title = GRRLIB_TextToTexture(homebrew_list[current_app].app_name, FONTSIZE_SMALL, 0x575757);
-				str_res_author = GRRLIB_TextToTexture(homebrew_list[current_app].app_author, FONTSIZE_SMALLER, COLOUR_BLUE);
-				str_res_version = GRRLIB_TextToTexture(homebrew_list[current_app].app_version, FONTSIZE_SMALLER, COLOUR_BLUE);
-				str_res_downloads = GRRLIB_TextToTexture(homebrew_list[current_app].app_downloads, FONTSIZE_SMALLER, COLOUR_BLUE);
+				str_res_title = GRRLIB_TextToTexture(homebrew_list[current_app].app_name, FONTSIZE_SMALL, TEXT_COLOUR_PRIMARY);
+				str_res_author = GRRLIB_TextToTexture(homebrew_list[current_app].app_author, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
+				str_res_version = GRRLIB_TextToTexture(homebrew_list[current_app].app_version, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
+				str_res_downloads = GRRLIB_TextToTexture(homebrew_list[current_app].app_downloads, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
 
 				char temp[50];
 				if (homebrew_list[current_app].app_total_size > 0 && homebrew_list[current_app].app_total_size < 1048576) {
@@ -2018,14 +2013,14 @@ int main(int argc, char **argv) {
 					float appsize = (float) (homebrew_list[current_app].app_total_size / 1024) / 1024;
 					sprintf (temp, "%1.1f MB", appsize);
 				}
-				str_res_size = GRRLIB_TextToTexture(temp, FONTSIZE_SMALLER, COLOUR_BLUE);
+				str_res_size = GRRLIB_TextToTexture(temp, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
 
 
 				app_time = homebrew_list[current_app].app_time;
 				char timebuf[50];
 				timeinfo = localtime ( &app_time );
 				strftime (timebuf,50,"%d %b %Y",timeinfo);
-				str_res_date = GRRLIB_TextToTexture(timebuf, FONTSIZE_SMALLER, COLOUR_BLUE);
+				str_res_date = GRRLIB_TextToTexture(timebuf, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
 
 				const int text_size = sizeof(homebrew_list[0].app_description);
 				char text_description[text_size];
@@ -2049,35 +2044,35 @@ int main(int argc, char **argv) {
 					count++;
 					if (x >= (55 * (textrow+1)) && x <= (75 * (textrow+1)) && text_description[x] == ' ' && textrow == 0) {
 						test[count] = '\0';
-						string1 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, COLOUR_BLUE);
+						string1 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
 						textrow = 1;
 						offset+= count - 55;
 						count = 0;
 					}
 					if (x >= (55 * (textrow+1) + offset) && x <= (75 * (textrow+1) + offset) && text_description[x] == ' ' && textrow == 1) {
 						test[count] = '\0';
-						string2 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, COLOUR_BLUE);
+						string2 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
 						textrow = 2;
 						offset+= count - 55;
 						count = 0;
 					}
 					if (x >= (55 * (textrow+1) + offset) && x <= (75 * (textrow+1) + offset) && text_description[x] == ' ' && textrow == 2) {
 						test[count] = '\0';
-						string3 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, COLOUR_BLUE);
+						string3 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
 						textrow = 3;
 						offset+= count - 55;
 						count = 0;
 					}
 					if (x >= (55 * (textrow+1) + offset) && x <= (75 * (textrow+1) + offset) && text_description[x] == ' ' && textrow == 3) {
 						test[count] = '\0';
-						string4 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, COLOUR_BLUE);
+						string4 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
 						textrow = 4;
 						offset+= count - 55;
 						count = 0;
 					}
 					if (x >= (55 * (textrow+1) + offset) && x <= (75 * (textrow+1) + offset) && text_description[x] == ' ' && textrow == 4) {
 						test[count] = '\0';
-						string5 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, COLOUR_BLUE);
+						string5 = GRRLIB_TextToTexture(test, FONTSIZE_SMALLER, TEXT_COLOUR_SECONDARY);
 						count = 0;
 						textrow = 5;
 						break;
