@@ -19,7 +19,7 @@ TARGET		:=	$(notdir $(CURDIR))
 BUILD		:=	build
 SOURCES		:=	source source/gfx source/GRRLIB source/GRRLIB/fonts source/libpng source/unzip
 DATA		:=	data
-INCLUDES	:=	$(CURDIR)/source/ $(PORTLIBS_PATH)/ppc/include/ $(PORTLIBS_PATH)/ppc/include/freetype2/
+INCLUDES	:=	$(CURDIR)/source/ $(PORTLIBS_PATH)/ppc/include/ $(PORTLIBS_PATH)/ppc/include/freetype2/ $(PORTLIBS_PATH)/wii/include/
 
 # https://web.archive.org/web/20200728174311/https://www.codemii.com/hbb-repositories/
 MAIN_DOMAIN 	:=	hbb1.oscwii.org
@@ -39,7 +39,7 @@ LDFLAGS		:=	-g $(MACHDEP) -mrvl -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=	-lz -lfat -lmxml -lwiiuse -lbte -lvorbisidec -lasnd -logg -lmad -lgrrlib -ljpeg -lpngu -lpng -lm -logc -lfreetype -lbz2
+LIBS	:=  -lfat -lmxml -lwiiuse -lbte -lvorbisidec -lasnd -logg -lmad -lgrrlib -ljpeg -lpngu -lpng -lm -logc -lfreetype -lbz2 -lz
 #LIBS	:=	-lpng -lz -lfat -lmxml -lwiiuse -lbte -lvorbisidec -lasnd -logc -lmodplay -lm -lmad -lfreetype
 
 
@@ -47,7 +47,7 @@ LIBS	:=	-lz -lfat -lmxml -lwiiuse -lbte -lvorbisidec -lasnd -logg -lmad -lgrrlib
 # list of directories containing libraries, this must be the top level containing
 # include and lib
 #---------------------------------------------------------------------------------
-LIBDIRS	:= $(CURDIR) $(PORTLIBS_PATH)/ppc
+LIBDIRS	:= $(CURDIR) $(PORTLIBS_PATH)/ppc $(PORTLIBS_PATH)/wii
 
 #---------------------------------------------------------------------------------
 # no real need to edit anything past this point unless you need to add additional
