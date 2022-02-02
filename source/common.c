@@ -1329,108 +1329,24 @@ u8 initialise_delete() {
 }
 
 static void *run_rating_thread(void *arg) {
+	CURLU* url = create_repo_url("/hbb/get_rating.php");
+	curl_set_query(url, "esid", esid);
+	curl_set_query(url, "name", homebrew_list[selected_app].name);
 
-	s32 main_server = server_connect(0);
-
-	char http_request[1000];
-	//strcpy(http_request,"GET /hbb/get_rating.php?esid=");
-	//strcat(http_request,esid);
-	//strcat(http_request,"&name=");
-	//strcat(http_request,homebrew_list[selected_app].name);
-	//strcat(http_request, " HTTP/1.0\r\n\r\n");
-	//strcat(http_request," HTTP/1.0\r\nHost: " MAIN_DOMAIN "\r\nCache-Control: no-cache\r\n\r\n");
-
-	if (setting_repo == 0) {
-		strcpy(http_request,"GET /hbb/get_rating.php?esid=");
-	}
-	else {
-		strcpy(http_request, "GET ");
-		strcat(http_request, repo_list[setting_repo].apps_dir);
-		strcat(http_request, "get_rating.php?esid=");
+	// TODO: In the future, we should probably care if this fails.
+	// However, the original code did not, returning 0 regardless.
+	char* rating_response = (char *)handle_get_request(url , NULL);
+	if (rating_response == NULL) {
+		return 0;
 	}
 
-	strcat(http_request,esid);
-	strcat(http_request,"&name=");
-	strcat(http_request,homebrew_list[selected_app].name);
-
-	strcat(http_request, " HTTP/1.0\r\nHost: ");
-	if (setting_repo == 0) {
-		if (codemii_backup == false) {
-			strcat(http_request, MAIN_DOMAIN);
-		}
-		else {
-			strcat(http_request, FALLBACK_DOMAIN);
-		}
-	}
-	else {
-		strcat(http_request, repo_list[setting_repo].domain);
-	}
-	strcat(http_request, "\r\nCache-Control: no-cache\r\n\r\n");
-
-	write_http_reply(main_server, http_request);
-
-	bool http_data = false;
-	char buf[BUFFER_SIZE];
-	s32 offset = 0;
-	s32 bytes_read;
-	while (offset < (BUFFER_SIZE - 1)) {
-		char *offset_buf = buf + offset;
-		if ((bytes_read = net_read(main_server, offset_buf, BUFFER_SIZE - 1 - offset)) < 0) {
-			//printf("Read error %i occurred. Retrying...\n", bytes_read);
-			net_close(main_server);
-			sleep(1);
-			return 0;
-		} else if (bytes_read == 0) {
-			break; // EOF from client
-		}
-		offset += bytes_read;
-		buf[offset] = '\0';
-
-		char *next;
-		char *end;
-		for (next = buf; (end = strstr(next, CRLF)); next = end + CRLF_LENGTH) {
-			*end = '\0';
-
-			if (*next) {
-				char *cmd_line = next;
-				//printf("Message: %s\n", cmd_line);
-
-				// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
-				if (strstr(cmd_line, "HTTP/1.1 4") || strstr(cmd_line, "HTTP/1.1 5")) {
-					//printf("The server appears to be having an issue. Retrying...\n");
-					net_close(main_server);
-					sleep(1);
-					return 0;
-				}
-
-				// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
-				if (strlen(cmd_line) == 1) {
-					http_data = true;
-				}
-
-				if (http_data == true) {
-					//int rating = atoi(cmd_line);
-					//homebrew_list[selected_app].user_rating = rating;
-					if ((strcmp(cmd_line,"1") == 0) || (strcmp(cmd_line,"2") == 0) || (strcmp(cmd_line,"3") == 0) || (strcmp(cmd_line,"4") == 0) || (strcmp(cmd_line,"5") == 0)) {
-						strcpy(homebrew_list[selected_app].user_rating, cmd_line);
-					}
-					else {
-						strcpy(homebrew_list[selected_app].user_rating,"-1");
-					}
-					//printf("Rating = %i\n",homebrew_list[selected_app].user_rating);
-				}
-			}
-		}
-
-		if (next != buf) { // some lines were processed
-			offset = strlen(next);
-			char tmp_buf[offset];
-			memcpy(tmp_buf, next, offset);
-			memcpy(buf, tmp_buf, offset);
-		}
+	if ((strcmp(rating_response, "1") == 0) || (strcmp(rating_response, "2") == 0) || (strcmp(rating_response, "3") == 0) || (strcmp(rating_response, "4") == 0) || (strcmp(rating_response, "5") == 0)) {
+		strcpy(homebrew_list[selected_app].user_rating, rating_response);
+	} else {
+		strcpy(homebrew_list[selected_app].user_rating, "-1");
 	}
 
-	net_close(main_server);
+	free(rating_response);
 	get_rating_in_progress = false;
 
 	return 0;
@@ -3305,219 +3221,136 @@ void check_temp_files() {
 }
 
 void add_to_stats() {
-	s32 main_server = server_connect(0);
-	char http_request[1000];
-	//strcpy(http_request,"GET /hbb_download.php?name=");
-	//strcat(http_request,homebrew_list[selected_app].name);
-	//strcat(http_request," HTTP/1.0\r\nHost: " MAIN_DOMAIN "\r\nCache-Control: no-cache\r\n\r\n");
+	// Make a request to note the download count.
+	// TODO: we ignore the result - is this expected.
+	CURLU* request = create_repo_url("/hbb_download.php");
+	curl_set_query(request, "name", homebrew_list[selected_app].name);
 
-	if (setting_repo == 0) {
-		strcpy(http_request, "GET /hbb_download.php?name=");
-		strcat(http_request,homebrew_list[selected_app].name);
+	// Actually perform the request
+	void* ignored = handle_get_request(request, NULL);
+	
+	// Free if possible
+	if (ignored != NULL) {
+		free(ignored);
 	}
-	else {
-		strcpy(http_request, "GET ");
-		strcat(http_request, repo_list[setting_repo].apps_dir);
-		strcat(http_request, "hbb_download.php?name=");
-		strcat(http_request, homebrew_list[selected_app].name);
-	}
-
-	strcat(http_request, " HTTP/1.0\r\nHost: ");
-	if (setting_repo == 0) {
-		if (codemii_backup == false) {
-			strcat(http_request, MAIN_DOMAIN);
-		}
-		else {
-			strcat(http_request, FALLBACK_DOMAIN);
-		}
-	}
-	else {
-		strcat(http_request, repo_list[setting_repo].domain);
-	}
-	strcat(http_request, "\r\nCache-Control: no-cache\r\n\r\n");
-
-	write_http_reply(main_server, http_request);
-	net_close(main_server);
 }
 
 
 // Check for new applications
 void apps_check() {
-
 	long setting_last_boot_num = atoi(setting_last_boot);
-
-	//int setting_last_boot_num = 12000000;
-	//strcpy(setting_last_boot, "12000000");
-	//printf("OLDTIME = %li\n", setting_last_boot_num);
-	//sleep(2);
 
 	// If able to read settings
 	if (setting_last_boot_num > 0 && setting_show_updated == true) {
-
 		printf("Checking for new/updated applications... ");
 
 		// Request this time from server
-		s32 main_server = server_connect(0);
+		CURLU* request = create_repo_url("/hbb/apps_check_new.php");
+		curl_set_query(request, "t", setting_last_boot);
 
-		char http_request[1000];
-		strcpy(http_request,"GET /hbb/apps_check_new.php?t=");
-		strcat(http_request, setting_last_boot);
-		//strcat(http_request, " HTTP/1.0\r\n\r\n");
-
-		if (codemii_backup == false) {
-			strcat(http_request," HTTP/1.0\r\nHost: " MAIN_DOMAIN "\r\nCache-Control: no-cache\r\n\r\n");
-		}
-		else {
-			strcat(http_request," HTTP/1.0\r\nHost: " FALLBACK_DOMAIN "\r\nCache-Control: no-cache\r\n\r\n");
+		// TODO: handle errors while checking for updates
+		char* check_response = (char *)handle_get_request(request, NULL);
+		if (check_response == NULL) {
+			return;
 		}
 
-		write_http_reply(main_server, http_request);
-
-		bool http_data = false;
-		long first_time = 0;
+		long temp_time = 0;
+		char app_text[100];
+		char app_version_from[100];
+		char app_version[100];
+		char app_text_total[200];
 		char timebuf[50];
-		char buf[BUFFER_SIZE];
-		s32 offset = 0;
-		s32 bytes_read;
-		int count = 0;
-		while (offset < (BUFFER_SIZE - 1)) {
-			char *offset_buf = buf + offset;
-			if ((bytes_read = net_read(main_server, offset_buf, BUFFER_SIZE - 1 - offset)) < 0) {
-				printf("Read error %i occurred in apps_check. Retrying...\n%s\n", bytes_read, get_error_msg(bytes_read));
-				net_close(main_server);
-				sleep(1);
-			} else if (bytes_read == 0) {
-				break; // EOF from client
+
+		// Parse repository data
+		char* pos = 0;
+		int line_count = 0;
+		bool first_time = false;
+
+		while (pos != NULL) {
+			// Get new line
+			char* old_pos = pos;
+			pos = strstr(pos, CRLF);
+			if (pos == NULL) {
+				// No more lines to read!
+				break;
 			}
-			offset += bytes_read;
-			buf[offset] = '\0';
 
-			char *next;
-			char *end;
-			for (next = buf; (end = strstr(next, CRLF)); next = end + CRLF_LENGTH) {
-				*end = '\0';
+			// Replace the \r in \r\n with a null terminator.
+			pos[0] = '\0';
+			char* current_line = old_pos;
 
-				if (*next) {
-					char *cmd_line = next;
+			if (line_count == 0) {
+				// Use server time
+				temp_time = atoi(current_line);
 
-					//printf("Message: %s\n", cmd_line);
-
-					// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
-					if (strstr(cmd_line, "HTTP/1.1 4") || strstr(cmd_line, "HTTP/1.1 5")) {
-						printf("The server appears to be having an issue (apps_check). Retrying...\n");
-						net_close(main_server);
-						sleep(1);
+				if (first_time == false) {
+					if (temp_time > 120000) {
+						char set1[14];
+						sprintf(set1, "%li", temp_time + 1);
+						strcpy(setting_last_boot, set1);
 					}
-
-					if (strlen(cmd_line) == 1) {
-						http_data = true;
-					}
-
-					if (http_data == true) {
-						//char *split_tok;
-						//printf("Message: %s - Count = %i\n", cmd_line, count);
-
-						long temp_time = 0;
-						char app_text[100];
-						char app_version_from[100];
-						char app_version[100];
-						char app_text_total[200];
-
-						if (count >= 1) {
-							if (count == 1) {
-								// Time
-								temp_time = atoi(cmd_line);
-
-								if (first_time == 0) {
-									if (temp_time > 120000) {
-										char set1[14];
-										sprintf(set1, "%li", temp_time + 1);
-										strcpy(setting_last_boot, set1);
-										//printf("TIME = %s\n", setting_last_boot);
-										//sleep(2);
-									}
-									first_time = 1;
-								}
-							}
-
-							if (count == 1) {
-								app_time = temp_time;
-								timeinfo = localtime ( &app_time );
-								strftime (timebuf,50,"%d %b %Y",timeinfo);
-								//printf("OK1\n");
-							}
-
-							// Text
-							if (count == 2) {
-								//split_tok = strtok (NULL, " ");
-								strcpy(app_text, cmd_line);
-								//printf("OK2\n");
-							}
-
-							// Version from
-							if (count == 3) {
-								//split_tok = strtok (NULL, " ");
-								strcpy(app_version_from, cmd_line);
-								//printf("OK3\n");
-							}
-
-							// Version to
-							if (count == 4) {
-								//split_tok = strtok (NULL, " ");
-								strcpy(app_version, cmd_line);
-								//printf("OK3\n");
-							}
-
-							// New or updated?
-							if (count == 5) {
-								//printf("OK5\n");
-								//split_tok = strtok (NULL, " ");
-								if (strcmp(cmd_line, "a") == 0) {
-									strcpy(app_text_total, timebuf);
-									strcat(app_text_total, " - ");
-									strcat(app_text_total, app_text);
-									strcat(app_text_total, " ");
-									strcat(app_text_total, app_version);
-									strcat(app_text_total, " added");
-								}
-								else {
-									strcpy(app_text_total, timebuf);
-									strcat(app_text_total, " - ");
-									strcat(app_text_total, app_text);
-									//strcat(app_text_total, " updated from ");
-									strcat(app_text_total, " ");
-									strcat(app_text_total, app_version_from);
-									strcat(app_text_total, " -> ");
-									strcat(app_text_total, app_version);
-								}
-
-								//printf("App = %s\n",app_text_total);
-
-								// Add text
-								strcpy(updated_apps_list[updated_apps_count].text, app_text_total);
-
-								updated_apps_count++;
-								count = 0;
-							}
-						}
-						count++;
-					}
+					first_time = true;
 				}
+
+				app_time = temp_time;
+				timeinfo = localtime(&app_time);
+				strftime(timebuf, 50, "%d %b %Y", timeinfo);
 			}
 
-			if (next != buf) { // some lines were processed
-				offset = strlen(next);
-				char tmp_buf[offset];
-				memcpy(tmp_buf, next, offset);
-				memcpy(buf, tmp_buf, offset);
+			// Text
+			if (line_count == 1) {
+				strcpy(app_text, current_line);
 			}
+
+			// Version from
+			if (line_count == 2) {
+				strcpy(app_version_from, current_line);
+			}
+
+			// Version to
+			if (line_count == 3) {
+				strcpy(app_version, current_line);
+			}
+
+			// New or updated?
+			if (line_count == 4) {
+				if (strcmp(current_line, "a") == 0) {
+					strcpy(app_text_total, timebuf);
+					strcat(app_text_total, " - ");
+					strcat(app_text_total, app_text);
+					strcat(app_text_total, " ");
+					strcat(app_text_total, app_version);
+					strcat(app_text_total, " added");
+				} else {
+					strcpy(app_text_total, timebuf);
+					strcat(app_text_total, " - ");
+					strcat(app_text_total, app_text);
+					strcat(app_text_total, " ");
+					strcat(app_text_total, app_version_from);
+					strcat(app_text_total, " -> ");
+					strcat(app_text_total, app_version);
+				}
+
+				//printf("App = %s\n",app_text_total);
+
+				// Add text
+				strcpy(updated_apps_list[updated_apps_count].text, app_text_total);
+				updated_apps_count++;
+				line_count = 0;
+			}
+				
+			// Our new string position is past our CRLF.
+			pos = pos + CRLF_LENGTH;
 		}
 
-		net_close(main_server);
+		// Clean up after ourselves.
+		free(check_response);
 
-		if (count >= 1) {
+		// Ensure we read content.
+		if (first_time == true) {
 			printf("Checked.\n\n");
 		}
+	
 		if (updated_apps_count >= 1) {
 			show_updated_apps = true;
 		}
@@ -3547,6 +3380,7 @@ void repo_check() {
 	char* pos = 0;
 	int line_type = 0;
 	bool seen_version = false;
+
 	while (pos != NULL) {
 		// Get new line
 		char* old_pos = pos;
@@ -3592,6 +3426,9 @@ void repo_check() {
 		// Our new string position is past our CRLF.
 		pos = pos + CRLF_LENGTH;
 	}
+
+	// Clean up after ourselves.
+	free(repo_response);
 
 	if (repo_count >= 1) {
 		printf("Repositories list received.\n");
@@ -3909,11 +3746,6 @@ void update_check() {
 			printf("No updates available.\n");
 		}
 	}
-}
-
-// Connect to the remote server
-s32 server_connect(int repo_bypass) {
-	return 0;
 }
 
 // Request the homebrew list
