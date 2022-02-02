@@ -34,7 +34,6 @@ extern int xfb_height;
 extern char rootdir[10];
 
 u8 initialise_reset_button();
-u8 initialise_www();
 u8 load_icons();
 u8 initialise_download();
 u8 initialise_delete();
@@ -46,15 +45,13 @@ void initialise_mod_music();
 void stop_mod_music();
 void play_mod_music();
 
-void testing();
-void suspend_reset_thread();
-void suspend_www_thread();
 void die(char *msg);
 void initialise();
 void SetScreen();
 void clearscreen();
 bool initialise_device();
 bool test_fat();
+bool initialize_networking();
 void initialise_fat();
 
 s32 write_exact(s32 s, char *buf, s32 length);
@@ -62,8 +59,7 @@ s32 read_to_file(s32 s, FILE *f);
 u32 split(char *s, char sep, u32 maxsplit, char *result[]);
 
 void initialise_network();
-bool check_wifi();
-extern u32 net_gethostip();
+bool ensure_wifi();
 
 extern bool codemii_backup;
 extern bool www_passed;
@@ -163,10 +159,7 @@ extern int no_manage_count;
 void download_queue_size();
 void add_to_stats();
 bool check_server();
-void initialise_codemii();
-void initialise_codemii_backup();
 
-s32 write_http_reply(s32 server, char *msg);
 s32 server_connect(int repo_bypass);
 s32 request_list();
 s32 request_file(s32 server, FILE *f);

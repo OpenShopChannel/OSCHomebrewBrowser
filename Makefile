@@ -39,8 +39,7 @@ LDFLAGS		:=	-g $(MACHDEP) -mrvl -Wl,-Map,$(notdir $@).map
 #---------------------------------------------------------------------------------
 # any extra libraries we wish to link with the project
 #---------------------------------------------------------------------------------
-LIBS	:=  -lfat -lmxml -lwiiuse -lbte -lvorbisidec -lasnd -logg -lmad -lgrrlib -ljpeg -lpngu -lpng -lm -logc -lfreetype -lbz2 -lz
-#LIBS	:=	-lpng -lz -lfat -lmxml -lwiiuse -lbte -lvorbisidec -lasnd -logc -lmodplay -lm -lmad -lfreetype
+LIBS	:=  -lfat -lmxml -lwiiuse -lbte -lvorbisidec -lasnd -logg -lmad -lgrrlib -ljpeg -lpngu -lpng -lcurl -lm -logc -lmbedtls -lmbedx509 -lwiisocket -lmbedcrypto -lfreetype -lbz2 -lz
 
 
 #---------------------------------------------------------------------------------

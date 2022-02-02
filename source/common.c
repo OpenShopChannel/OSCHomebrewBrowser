@@ -11,7 +11,8 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include <errno.h>
 #include <fat.h>
 #include <math.h>
-#include <network.h>
+#include <wiisocket.h>
+#include <curl/curl.h>
 //#include <gcmodplay.h>
 #include <asndlib.h>
 #include <ogc/lwp_watchdog.h>
@@ -32,9 +33,9 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "unzip/miniunz.h"
 #include "GRRLIB/GRRLIB.h"
 #include "common.h"
+#include "net_requests.h"
 //#include "loop_mod.h"
 //#include "md5.h"
-#include "dns.h"
 
 // Modified Tantric FAT code
 #include <sdcard/wiisd_io.h>
@@ -53,12 +54,7 @@ const DISC_INTERFACE* usb = &__io_usbstorage;
 #define FONTSIZE_SMALL 18
 #define BUFFER_SIZE 1024
 #define NET_BUFFER_SIZE 1024
-#define IP_ADDRESS_OLD_LOCAL "192.168.1.1"
-#define IP_ADDRESS_OLD "79.136.53.163"
-#define IP_ADDRESS_OLD2 "69.163.186.246"
-//#define IP_ADDRESS "192.168.1.1"
 #define SOCKET_PORT 80
-u32 IP_ADDRESS = 0;
 
 const char *CRLF = "\r\n";
 const u32 CRLF_LENGTH = 2;
@@ -113,7 +109,6 @@ static lwp_t rating_thread;
 static lwp_t update_rating_thread;
 static lwp_t music_thread;
 static lwp_t request_thread;
-static lwp_t www_thread;
 
 int category_old_selection = 2;
 
@@ -224,22 +219,6 @@ size_t result;
 struct tm * timeinfo;
 time_t app_time;
 
-//char testy[200];
-
-void testing() {
-	printf("Going to test downloading a file\n");
-	hbb_updating = true;
-	if (create_and_request_file("sd:/apps/", "homebrew_browser", "/temp_files.zip") == 1) {
-		printf("Test complete\n");
-	}
-	else {
-		printf("Test failed\n");
-	}
-	remove_file("sd:/apps/homebrew_browser/temp_files.zip");
-	hbb_updating = false;
-	sleep(3);
-}
-
 char* get_error_msg(s32 error_code) {
 	switch (error_code) {
 		case -6:
@@ -289,24 +268,7 @@ u8 initialise_reset_button() {
 	return !result;
 }
 
-static void *run_www_thread(void *arg) {
-	s32 main_server = server_connect(1);
-	net_close(main_server);
-	www_passed = true;
-	return 0;
-}
-
-u8 initialise_www() {
-	s32 result = LWP_CreateThread(&www_thread, run_www_thread, NULL, NULL, 0, 80);
-	return result;
-}
-
-void suspend_www_thread() {
-	LWP_SuspendThread(www_thread);
-}
-
 static void *run_icons_thread(void *arg) {
-
 	sleep(5);
 
 	int x;
@@ -584,7 +546,7 @@ static void *run_download_thread(void *arg) {
 	}
 
 	// Check we are still connected to the Wireless
-	if (check_wifi() == false) {
+	if (ensure_wifi() == false) {
 		download_status = false;
 		error_number = 10;
 	}
@@ -1481,112 +1443,26 @@ u8 initialise_rating() {
 
 
 static void *run_update_rating_thread(void *arg) {
+	// Formulate request URL
+	CURLU* url = create_repo_url("/hbb/update_rating.php");
+	curl_set_query(url, "esid", esid);
+	curl_set_query(url, "name", homebrew_list[selected_app].name);
+	curl_set_query(url, "rate", rating_number);
 
-	s32 main_server = server_connect(0);
-
-	char http_request[1000];
-	//strcpy(http_request,"GET /hbb/update_rating.php?esid=");
-	//strcat(http_request,esid);
-	//strcat(http_request,"&name=");
-	//strcat(http_request,homebrew_list[selected_app].name);
-	//strcat(http_request,"&rate=");
-	//strcat(http_request, rating_number);
-	//strcat(http_request, " HTTP/1.0\r\n\r\n");
-	//strcat(http_request," HTTP/1.0\r\nHost: " MAIN_DOMAIN "\r\nCache-Control: no-cache\r\n\r\n");
-
-	if (setting_repo == 0) {
-		strcpy(http_request,"GET /hbb/update_rating.php?esid=");
-	}
-	else {
-		strcpy(http_request, "GET ");
-		strcat(http_request, repo_list[setting_repo].apps_dir);
-		strcat(http_request, "update_rating.php?esid=");
+	// TODO: In the future, we should probably care if this fails.
+	// However, the original code did not, returning 0 regardless.
+	char* rating_response = (char *)handle_get_request(url , NULL);
+	if (rating_response == NULL) {
+		return 0;
 	}
 
-	strcat(http_request,esid);
-	strcat(http_request,"&name=");
-	strcat(http_request,homebrew_list[selected_app].name);
-	strcat(http_request,"&rate=");
-	strcat(http_request, rating_number);
-
-	strcat(http_request, " HTTP/1.0\r\nHost: ");
-	if (setting_repo == 0) {
-		if (codemii_backup == false) {
-			strcat(http_request, MAIN_DOMAIN);
-		}
-		else {
-			strcat(http_request, FALLBACK_DOMAIN);
-		}
-	}
-	else {
-		strcat(http_request, repo_list[setting_repo].domain);
-	}
-	strcat(http_request, "\r\nCache-Control: no-cache\r\n\r\n");
-
-	write_http_reply(main_server, http_request);
-
-	bool http_data = false;
-	char buf[BUFFER_SIZE];
-	s32 offset = 0;
-	s32 bytes_read;
-	while (offset < (BUFFER_SIZE - 1)) {
-		char *offset_buf = buf + offset;
-		if ((bytes_read = net_read(main_server, offset_buf, BUFFER_SIZE - 1 - offset)) < 0) {
-			//printf("Read error %i occurred. Retrying...\n", bytes_read);
-			net_close(main_server);
-			sleep(1);
-			return 0;
-		} else if (bytes_read == 0) {
-			break; // EOF from client
-		}
-		offset += bytes_read;
-		buf[offset] = '\0';
-
-		char *next;
-		char *end;
-		for (next = buf; (end = strstr(next, CRLF)); next = end + CRLF_LENGTH) {
-			*end = '\0';
-
-			if (*next) {
-				char *cmd_line = next;
-				//printf("Message: %s\n", cmd_line);
-
-				// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
-				if (strstr(cmd_line, "HTTP/1.1 4") || strstr(cmd_line, "HTTP/1.1 5")) {
-					//printf("The server appears to be having an issue. Retrying...\n");
-					net_close(main_server);
-					sleep(1);
-					return 0;
-				}
-
-				// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
-				if (strlen(cmd_line) == 1) {
-					http_data = true;
-				}
-
-				if (http_data == true) {
-					//int rating = atoi(cmd_line);
-					//homebrew_list[selected_app].user_rating = rating;
-					if ((strcmp(cmd_line,"1") == 0) || (strcmp(cmd_line,"2") == 0) || (strcmp(cmd_line,"3") == 0) || (strcmp(cmd_line,"4") == 0) || (strcmp(cmd_line,"5") == 0)) {
-						strcpy(homebrew_list[selected_app].user_rating, cmd_line);
-					}
-					else {
-						strcpy(homebrew_list[selected_app].user_rating,"-1");
-					}
-					//printf("Rating = %i\n",homebrew_list[selected_app].user_rating);
-				}
-			}
-		}
-
-		if (next != buf) { // some lines were processed
-			offset = strlen(next);
-			char tmp_buf[offset];
-			memcpy(tmp_buf, next, offset);
-			memcpy(buf, tmp_buf, offset);
-		}
+	if ((strcmp(rating_response, "1") == 0) || (strcmp(rating_response, "2") == 0) || (strcmp(rating_response, "3") == 0) || (strcmp(rating_response, "4") == 0) || (strcmp(rating_response, "5") == 0)) {
+		strcpy(homebrew_list[selected_app].user_rating, rating_response);
+	} else {
+		strcpy(homebrew_list[selected_app].user_rating, "-1");
 	}
 
-	net_close(main_server);
+	free(rating_response);
 
 	return 0;
 }
@@ -2799,9 +2675,15 @@ void initialise() {
 	//add_to_log("Initialise complete.");
 }
 
+bool initialize_networking() {
+	// Prepare libcurl's internals.
+	curl_global_init(CURL_GLOBAL_ALL);
+
+	// Ensure networking is available.
+	return ensure_wifi();
+}
 
 static bool can_open_root_fs() {
-
 	DIR *root;
 	root = opendir(rootdir);
 	if (root) {
@@ -2969,167 +2851,34 @@ bool test_fat() {
 	return true;
 }
 
-void initialise_network() {
-	/*printf("Waiting for network to initialise... ");
-	s32 result = -1;
-	while (result < 0) {
-		while ((result = net_init()) == -EAGAIN) {
-			if (setting_online == false) { break; }
-		}
-		if (result < 0) printf("Unable to initialise network, retrying...\n");
-		if (setting_online == false) { break; }
-	}
-	if (result >= 0) {
-		u32 ip = 0;
-		do {
-			ip = net_gethostip();
-			if (!ip) printf("Unable to initialise network, retrying...\n");
-			if (setting_online == false) { break; }
-		} while (!ip);
-		if (ip) printf("Network initialised.\n");
-	}*/
-
-	printf("Waiting for network to initialise... ");
-
-	// Tantric code from Snes9x-gx
-	s32 res=-1;
-	int retry;
-	int wait;
-
-	retry = 5;
-
-	while (retry>0)
-	{
-		int i;
-		net_deinit();
-		for(i=0; i < 400; i++) // 10 seconds to try to reset
-		{
-			res = net_get_status();
-			if(res != -EBUSY) // trying to init net so we can't kill the net
-			{
-				usleep(2000);
-				net_wc24cleanup(); //kill the net
-				usleep(20000);
-				break;
-			}
-			usleep(20000);
-		}
-
-		usleep(2000);
-		res = net_init_async(NULL, NULL);
-
-		if(res != 0)
-		{
-			sleep(1);
-			retry--;
-			continue;
-		}
-
-		res = net_get_status();
-		wait = 400; // only wait 8 sec
-		while (res == -EBUSY && wait > 0)
-		{
-			usleep(20000);
-			res = net_get_status();
-			wait--;
-		}
-
-		if(res==0) break;
-		retry--;
-		usleep(2000);
-	}
-	if (res == 0)
-	{
-		struct in_addr hostip;
-		hostip.s_addr = net_gethostip();
-		if (hostip.s_addr)
-		{
-			printf("Network initialised.\n");
-		}
-	}
-
-}
-
-bool check_wifi() {
+bool ensure_wifi() {
 	s32 result = -1;
 	int times = 0;
 
+	// Attempt three times to initialize networking.
+
 	while (result < 0 && times < 3) {
-		while ((result = net_init()) == -EAGAIN) {
+		while ((result = wiisocket_get_status()) == -1) {
 		}
 		if (result < 0) printf("Unable to initialise network, retrying...\n");
 		times++;
 	}
-	//printf("T = %i\n", times);
+
 	if (result >= 0 && times < 3) {
 		u32 ip = 0;
 		do {
-			ip = net_gethostip();
+			ip = gethostid();
 			if (!ip) printf("Unable to initialise network, retrying...\n");
 			times++;
 		} while (!ip && times < 3);
 		if (ip) printf("Network initialised.\n");
 	}
-	//printf("T = %i\n", times);
+
 	if (times >= 3) {
-		return 0;
+		return true;
 	}
-	return 1;
+	return false;
 }
-
-void initialise_codemii() {
-	printf("Requesting IP address of " MAIN_DOMAIN "... ");
-	initializedns();
-	//IP_ADDRESS = getipbynamecached("test");
-	IP_ADDRESS = getipbynamecached(MAIN_DOMAIN);
-
-	if (IP_ADDRESS == 0) {
-		printf("Failed, using stored IP address\n");
-		hostname_ok = false;
-	}
-	else {
-		printf("IP address successfully retrieved\n");
-	}
-}
-
-void initialise_codemii_backup() {
-	printf("Requesting IP address of " FALLBACK_DOMAIN "... ");
-	hostname_ok = true;
-	if (setting_server == true) {
-		initializedns();
-	}
-	IP_ADDRESS = getipbynamecached(FALLBACK_DOMAIN);
-
-	if (IP_ADDRESS == 0) {
-		printf("Failed, using stored IP address\n");
-		hostname_ok = false;
-	}
-	else {
-		printf("IP address successfully retrieved\n");
-	}
-}
-
-typedef s32 (*transferrer_type)(s32 s, void *mem, s32 len);
-inline static s32 transfer_exact(s32 s, char *buf, s32 length, transferrer_type transferrer) {
-	s32 bytes_transferred = 0;
-	s32 remaining = length;
-	while (remaining) {
-		if ((bytes_transferred = transferrer(s, buf, remaining > NET_BUFFER_SIZE ? NET_BUFFER_SIZE : remaining)) > 0) {
-			remaining -= bytes_transferred;
-			buf += bytes_transferred;
-		} else if (bytes_transferred < 0) {
-			return bytes_transferred;
-		} else {
-			return -ENODATA;
-		}
-	}
-	return 0;
-}
-
-inline s32 write_exact(s32 s, char *buf, s32 length) {
-	return transfer_exact(s, buf, length, (transferrer_type)net_write);
-}
-
 
 int load_file_to_memory(const char *filename, unsigned char **result) {
 	int size = 0;
@@ -3776,104 +3525,75 @@ void apps_check() {
 }
 
 void repo_check() {
-
 	// Setting in settings which will just be a number, 0 for HBB, 1 for another one, etc.
 	// Always grab the listing of other repos...
-
 	printf("Requesting repositories list... ");
 
-	s32 main_server = server_connect(1);
-
-	char http_request[1000];
-	strcpy(http_request,"GET /hbb/repo_list.txt");
-	//strcat(http_request, " HTTP/1.0\r\n\r\n");
-
-	if (codemii_backup == false) {
-		strcat(http_request," HTTP/1.0\r\nHost: " MAIN_DOMAIN "\r\nCache-Control: no-cache\r\n\r\n");
-	}
-	else {
-		strcat(http_request," HTTP/1.0\r\nHost: " FALLBACK_DOMAIN "\r\nCache-Control: no-cache\r\n\r\n");
-	}
-
-	write_http_reply(main_server, http_request);
-
-	bool http_data = false;
-	char buf[BUFFER_SIZE];
-	s32 offset = 0;
-	s32 bytes_read;
-	int count = 0;
-	while (offset < (BUFFER_SIZE - 1)) {
-		char *offset_buf = buf + offset;
-		if ((bytes_read = net_read(main_server, offset_buf, BUFFER_SIZE - 1 - offset)) < 0) {
-			printf("Read error %i occurred in repo_check. Retrying...\n%s\n", bytes_read, get_error_msg(bytes_read));
-			net_close(main_server);
-			sleep(1);
-		} else if (bytes_read == 0) {
-			break; // EOF from client
+	// Perform a request.
+	CURLcode error;
+	char* repo_response = (char *)get_request("/hbb/repo_list.txt", &error);
+	if (repo_list == NULL) {
+		// Check to see why.
+		if (error == CURLE_OPERATION_TIMEDOUT && codemii_backup == false) {
+			// Attempt our backup server on the next attempt, as we are not currently.
+			codemii_backup = true;
 		}
-		offset += bytes_read;
-		buf[offset] = '\0';
 
-		char *next;
-		char *end;
-		for (next = buf; (end = strstr(next, CRLF)); next = end + CRLF_LENGTH) {
-			*end = '\0';
+		printf("Failed to receive Repositories list.\n");
+		return;
+	}
 
-			if (*next) {
-				char *cmd_line = next;
+	// Parse repository data
+	char* pos = 0;
+	int line_type = 0;
+	bool seen_version = false;
+	while (pos != NULL) {
+		// Get new line
+		char* old_pos = pos;
+		pos = strstr(pos, CRLF);
+		if (pos == NULL) {
+			// No more lines to read!
+			break;
+		}
 
-				//printf("Message: %s, %i\n", cmd_line, strlen(cmd_line));
+		// Replace the \r in \r\n with a null terminator.
+		pos[0] = '\0';
+		char* current_line = old_pos;
 
-				// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
-				if (strstr(cmd_line, "HTTP/1.1 4") || strstr(cmd_line, "HTTP/1.1 5")) {
-					printf("The server appears to be having an issue (repo_check). Retrying...\n");
-					net_close(main_server);
-					sleep(1);
-				}
-
-				if (strlen(cmd_line) == 1) {
-					http_data = true;
-				}
-
-				if (http_data == true) {
-					//char *split_tok;
-					//printf("Message: %s - Count = %i\n", cmd_line, count);
-
-					if (count >= 1) {
-						if (count == 1) {
-							strcpy(repo_list[repo_count].name, cmd_line);
-						}
-
-						if (count == 2) {
-							strcpy(repo_list[repo_count].domain, cmd_line);
-						}
-
-						if (count == 3) {
-							strcpy(repo_list[repo_count].list_file, cmd_line);
-						}
-
-						if (count == 4) {
-							strcpy(repo_list[repo_count].apps_dir, cmd_line);
-							repo_count++;
-							count = 0;
-						}
-					}
-					count++;
-				}
+		// Our first line is expected to be the literal "1".
+		if (seen_version == false) {
+			if (strcmp(current_line, "1") == 0) {
+				seen_version = true;
+			}	else {
+				// Seems we didn't find it.
+				continue;
 			}
 		}
 
-		if (next != buf) { // some lines were processed
-			offset = strlen(next);
-			char tmp_buf[offset];
-			memcpy(tmp_buf, next, offset);
-			memcpy(buf, tmp_buf, offset);
+		// We're now ready to read our repo info.
+		if (line_type == 0) {
+			strcpy(repo_list[repo_count].name, current_line);
 		}
+
+		if (line_type == 1) {
+			strcpy(repo_list[repo_count].domain, current_line);
+		}
+
+		if (line_type == 2) {
+			strcpy(repo_list[repo_count].list_file, current_line);
+		}
+
+		if (line_type == 3) {
+			strcpy(repo_list[repo_count].apps_dir, current_line);
+			repo_count++;
+			line_type = 0;
+		}
+
+		// Our new string position is past our CRLF.
+		pos = pos + CRLF_LENGTH;
 	}
 
-	net_close(main_server);
-
-	if (count >= 1) {
+	if (repo_count >= 1) {
 		printf("Repositories list received.\n");
 
 		// Now check which server to use
@@ -3881,8 +3601,7 @@ void repo_check() {
 			printf("Using repository: %s\n", repo_list[setting_repo].name);
 			printf("Press Wiimote '2' or Gamecube 'X' button to revert to the CodeMii Repo\n\n");
 		}
-	}
-	else if (count == 0) {
+	} else if (repo_count == 0) {
 		printf("Failed to receive Repositories list.\n");
 	}
 }
@@ -4192,104 +3911,9 @@ void update_check() {
 	}
 }
 
-
-// Write our message to the server
-s32 write_http_reply(s32 server, char *msg) {
-	u32 msglen = strlen(msg);
-	char msgbuf[msglen + 1];
-	if (msgbuf == NULL) return -ENOMEM;
-	//sprintf(msgbuf, "%s", msg);
-	strcpy(msgbuf, msg);
-	//printf("Request: %s", msgbuf);
-	//return write_exact(server, msgbuf, msglen);
-
-	tcp_write (server, msgbuf, msglen);
-	//net_write(server, msgbuf, msglen);
-	return 1;
-}
-
-bool tcp_write (const s32 s, char *buffer, const u32 length) {
-	char *p;
-	u32 step, left, block, sent;
-	s32 res;
-
-	step = 0;
-	p = buffer;
-	left = length;
-	sent = 0;
-
-	while (left) {
-
-		block = left;
-		if (block > 2048)
-			block = 2048;
-
-		res = net_write (s, p, block);
-
-		if ((res == 0) || (res == -56)) {
-			usleep (20 * 1000);
-			continue;
-		}
-
-		if (res < 0) {
-			break;
-		}
-
-		sent += res;
-		left -= res;
-		p += res;
-
-		if ((sent / NET_BUFFER_SIZE) > step) {
-			step++;
-		}
-	}
-
-	return left == 0;
-}
-
-
 // Connect to the remote server
 s32 server_connect(int repo_bypass) {
-
-	struct sockaddr_in connect_addr;
-
-	s32 server = net_socket(AF_INET, SOCK_STREAM, IPPROTO_IP);
-	//if (server < 0) die("Error creating socket, exiting");
-
-	memset(&connect_addr, 0, sizeof(connect_addr));
-	connect_addr.sin_family = AF_INET;
-	connect_addr.sin_port = SOCKET_PORT;
-
-	if (setting_repo == 0 || repo_bypass == 1) {
-		if (hostname_ok == true) {
-			if (codemii_backup == false) {
-				connect_addr.sin_addr.s_addr= getipbynamecached(MAIN_DOMAIN);
-			}
-			else {
-				connect_addr.sin_addr.s_addr= getipbynamecached(FALLBACK_DOMAIN);
-			}
-		}
-		else {
-			if (codemii_backup == false) {
-				connect_addr.sin_addr.s_addr= inet_addr(IP_ADDRESS_OLD);
-			}
-			else {
-				connect_addr.sin_addr.s_addr= inet_addr(IP_ADDRESS_OLD2);
-			}
-		}
-	}
-	else {
-		connect_addr.sin_addr.s_addr = getipbynamecached(repo_list[setting_repo].domain);
-	}
-
-	//connect_addr.sin_addr.s_addr= inet_addr(IP_ADDRESS_OLD_LOCAL);
-
-	if (net_connect(server, (struct sockaddr*)&connect_addr, sizeof(connect_addr)) == -1) {
-		net_close(server);
-		die("Failed to connect to the remote server.\n");
-	}
-
-	return server;
+	return 0;
 }
 
 // Request the homebrew list

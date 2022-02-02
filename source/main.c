@@ -14,11 +14,9 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include <errno.h>
 #include <malloc.h>
 #include <math.h>
-#include <network.h>
 #include <ogcsys.h>
 #include <gccore.h>
 #include <ogc/pad.h>
-//#include <gcmodplay.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -253,14 +251,12 @@ void close_windows() {
 
 int main(int argc, char **argv) {
 	//add_to_log("Booting Homebrew Browser v0.3.9");
-
 	initialise();
 	initialise_reset_button();
 	WPAD_SetPowerButtonCallback(WiimotePowerPressed);
 
 	current_time = time(0);
 	sprintf(setting_last_boot, "%li", current_time); // bug fix
-	//add_to_log("Time is %li", current_time);
 
 	printf("\x1b[2;0H");
 	printf("Homebrew Browser v0.4.0 Beta\n");
@@ -272,14 +268,18 @@ int main(int argc, char **argv) {
 	if (esid <= 0) { printf("ESID error - You won't be able to rate applications.\n"); }
 
 	if (setting_online == true) {
-		initialise_network();
+		initialize_networking();
 	}
 
 	initialise_fat();
 	load_settings();
-	//load_no_manage_list();
 
 	if (setting_online == true && setting_server == false) {
+		// Ensure 
+		if (initialize_networking() == false) {
+			die("\nReturning you back to HBC. Please verify your Wii is connected to the internet.\n");
+		}
+
 		initialise_codemii();
 		printf("Attempting to connect to server... ");
 		int main_retries = 0;
@@ -295,7 +295,6 @@ int main(int argc, char **argv) {
 
 			}
 			main_retries++;
-			suspend_www_thread();
 		}
 
 		if (www_passed == false) {
@@ -317,11 +316,8 @@ int main(int argc, char **argv) {
 
 				}
 				main_retries++;
-				suspend_www_thread();
 			}
 		}
-
-		suspend_www_thread();
 
 		if (www_passed == false) {
 			die("\nReturning you back to HBC. Please check to see if " MAIN_DOMAIN " and " FALLBACK_DOMAIN " are working.\n");
@@ -330,8 +326,7 @@ int main(int argc, char **argv) {
 		printf("Connection established\n");
 		//while (check_server() != true); Removed server check, there was no real protection
 		repo_check();
-	}
-	else if (setting_server == true) { // Secondary server setting enabled
+	} else if (setting_server == true) { // Secondary server setting enabled
 		codemii_backup = true;
 		initialise_codemii_backup();
 		printf("Attempting to connect to OSCWii Secondary server... ");
@@ -349,10 +344,7 @@ int main(int argc, char **argv) {
 
 			}
 			main_retries++;
-			suspend_www_thread();
 		}
-
-		suspend_www_thread();
 
 		if (www_passed == false) {
 			die("\nReturning you back to HBC. Please check to see if " FALLBACK_DOMAIN " is working.\n");
@@ -4042,6 +4034,9 @@ int main(int argc, char **argv) {
 		}
 
 	}
+
+	// Ensure libcurl has been cleaned up.
+	curl_global_cleanup();
 
 	return 0;
 }
