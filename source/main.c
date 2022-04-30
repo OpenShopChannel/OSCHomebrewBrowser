@@ -483,6 +483,8 @@ int main(int argc, char **argv) {
 	GRRLIB_texImg *str_res_size = NULL;
 	GRRLIB_texImg *str_res_date = NULL;
 
+	// About app icon
+	GRRLIB_texImg *app_icon_img = NULL;
 
 	// About text description
 	GRRLIB_texImg *string1 = NULL;
@@ -2009,6 +2011,8 @@ int main(int argc, char **argv) {
 				str_res_version = GRRLIB_TextToTexture(homebrew_list[current_app].app_version, FONTSIZE_SMALLER, COLOUR_BLUE);
 				str_res_downloads = GRRLIB_TextToTexture(homebrew_list[current_app].app_downloads, FONTSIZE_SMALLER, COLOUR_BLUE);
 
+				app_icon_img = GRRLIB_LoadTexture(homebrew_list[current_app].content);
+
 				char temp[50];
 				if (homebrew_list[current_app].app_total_size > 0 && homebrew_list[current_app].app_total_size < 1048576) {
 					int appsize = homebrew_list[current_app].app_total_size / 1024;
@@ -2162,16 +2166,8 @@ int main(int argc, char **argv) {
 			if ((download_in_progress == false && extract_in_progress == false && delete_in_progress == false && rating_in_progress == false) || (strcmp (store_homebrew_list[0].name, homebrew_list[current_app].name) != 0 && rating_in_progress == false)) {
 
 				{
-					int rating;
-
-					rating = homebrew_list[current_app].app_rating;
-					uint32_t color;
-					for (int i = 0; i < 5; ++i)
-					{
-						if (rating > i)
-							color = 0xFFFFFFFF;
-						else
-							color = 0x00000040;
+                    // draw app icon
+                    GRRLIB_DrawImg(70, 370, app_icon_img, 0, 1.0, 1.0, 0xFFFFFFFF);
 
                     //int rating;
 //
@@ -3944,6 +3940,9 @@ int main(int argc, char **argv) {
 			free(str_res_size);
 			free(str_res_date->data);
 			free(str_res_date);
+			GRRLIB_ClearTex(app_icon_img);
+			free(app_icon_img->data);
+			free(app_icon_img);
 			free_about = false;
 		}
 
