@@ -263,7 +263,7 @@ int main(int argc, char **argv) {
 	//add_to_log("Time is %li", current_time);
 
 	printf("\x1b[2;0H");
-	printf("Homebrew Browser v0.3.9e\n");
+	printf("Homebrew Browser v0.4.0 Beta\n");
 
 	u32 temp_esid;
 	ES_GetDeviceID(&temp_esid);
