@@ -17,6 +17,7 @@
 #include <utime.h>
 #include "unzip.h"
 #include "common.h"
+#include "settings.h"
 
 #define CASESENSITIVITY (0)
 #define WRITEBUFFERSIZE (8192)

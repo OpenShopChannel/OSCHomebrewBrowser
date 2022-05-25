@@ -29,6 +29,7 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "unzip/unzip.h"
 #include "unzip/miniunz.h"
 #include "common.h"
+#include "settings.h"
 #include "net_requests.h"
 #include "GRRLIB/GRRLIB.h"
 #include "GRRLIB_font1_png.h"

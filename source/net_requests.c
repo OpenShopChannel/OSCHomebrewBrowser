@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "net_requests.h"
+#include "settings.h"
 
 // Helper function to work with domains and paths.
 CURLU *domain_with_path(char *domain, char *path) {
