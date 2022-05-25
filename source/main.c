@@ -29,6 +29,7 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "unzip/unzip.h"
 #include "unzip/miniunz.h"
 #include "common.h"
+#include "net_requests.h"
 #include "GRRLIB/GRRLIB.h"
 #include "GRRLIB_font1_png.h"
 #include <dirent.h>
@@ -273,87 +274,55 @@ int main(int argc, char **argv) {
 	load_settings();
 
 	if (setting_online == true) {
-		initialize_networking();
-	}
-
-	if (setting_online == true && setting_server == false) {
-		// Ensure 
-		if (initialize_networking() == false) {
+		bool could_initialize = initialize_networking();
+		if (could_initialize == false) {
 			die("\nReturning you back to HBC. Please verify your Wii is connected to the internet.\n");
 		}
 
-		initialise_codemii();
-		printf("Attempting to connect to server... ");
-		int main_retries = 0;
-		while (www_passed != true && main_retries < 3) {
-			initialise_www();
-			int retries = 0;
-			while (www_passed != true && retries < 5) {
-				sleep(1);
-				retries++;
-			}
-			if (www_passed == false) {
-				printf("Failed, retrying... \n");
+		// If the user has setting_server set, we should not attempt the main server.
+		codemii_backup = setting_server;
 
+		int attempt_count = 0;
+
+		while (could_connect == false && attempt_count < 3) {
+			// We'll HEAD the repository list to test connectivity.
+			CURLU* test_url = create_hardcoded_url("/hbb/list.txt");
+
+			// Notify the user of what's going on.
+			char* domain = NULL;
+			curl_url_get(test_url, CURLUPART_HOST, &domain, 0);
+			printf("Attempting to connect to %s...\n", domain);
+			curl_free(domain);
+
+			// Here we go...
+			CURLcode res = test_head_request(test_url);
+			if (res == CURLE_OK) {
+				// Success!
+				could_connect = true;
+				break;
 			}
-			main_retries++;
+
+			// Otherwise, inform the user why.
+			const char* reason = curl_easy_strerror(res);
+			printf("Failed to connect to server: %s\n"
+				"Retrying...\n", reason);
+			
+			attempt_count += 1;
+
+			// If we aren't already, use the backup server.
+			if (attempt_count == 3 && codemii_backup == false) {
+				printf("\nOSCWii appears to be having issues, using OSCWii Backup Server.\n\n");
+				codemii_backup = true;
+				attempt_count = 0;
+			}
 		}
 
-		if (www_passed == false) {
-			codemii_backup = true;
-			printf("\nOSCWii appears to be having issues, using OSCWii Backup Server.\n\n");
-			initialise_codemii_backup();
-			printf("Attempting to connect to server... ");
-
-			int main_retries = 0;
-			while (www_passed != true && main_retries < 3) {
-				initialise_www();
-				int retries = 0;
-				while (www_passed != true && retries < 5) {
-					sleep(1);
-					retries++;
-				}
-				if (www_passed == false) {
-					printf("Failed, retrying... \n");
-
-				}
-				main_retries++;
-			}
-		}
-
-		if (www_passed == false) {
+		if (could_connect == false) {
 			die("\nReturning you back to HBC. Please check to see if " MAIN_DOMAIN " and " FALLBACK_DOMAIN " are working.\n");
 		}
 
 		printf("Connection established\n");
 		//while (check_server() != true); Removed server check, there was no real protection
-		repo_check();
-	} else if (setting_server == true) { // Secondary server setting enabled
-		codemii_backup = true;
-		initialise_codemii_backup();
-		printf("Attempting to connect to OSCWii Secondary server... ");
-		
-		int main_retries = 0;
-		while (www_passed != true && main_retries < 3) {
-			initialise_www();
-			int retries = 0;
-			while (www_passed != true && retries < 5) {
-				sleep(1);
-				retries++;
-			}
-			if (www_passed == false) {
-				printf("Failed, retrying... \n");
-
-			}
-			main_retries++;
-		}
-
-		if (www_passed == false) {
-			die("\nReturning you back to HBC. Please check to see if " FALLBACK_DOMAIN " is working.\n");
-		}
-
-		printf("Connection established\n");
-		//while (check_server() != true); Removed server check, no real protection.
 		repo_check();
 	}
 

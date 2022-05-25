@@ -116,7 +116,7 @@ long remote_hb_size = 0;
 char update_text[1000];
 
 bool codemii_backup = false;
-bool www_passed = false;
+bool could_connect = false;
 
 int download_in_progress = 0;
 int extract_in_progress = 0;
@@ -2594,6 +2594,22 @@ bool initialize_networking() {
 	// Prepare libcurl's internals.
 	curl_global_init(CURL_GLOBAL_ALL);
 
+	// Attempt three times to initialize libwiisocket.
+	int times = 0;
+	int result = 0;
+	while (times < 3) {
+		result = wiisocket_init();
+		if (result == 0) {
+			// Success!
+			break;
+		}
+		printf("Unable to initialize network, retrying...\n");
+	}
+
+	if (result != 0) {
+		printf("Failed to initialize network. (wiisocket init error %d)\n", result);
+	}
+
 	// Ensure networking is available.
 	return ensure_wifi();
 }
@@ -2767,32 +2783,23 @@ bool test_fat() {
 }
 
 bool ensure_wifi() {
-	s32 result = -1;
-	int times = 0;
+	u32 ip = 0;
+	int attempts = 0;
 
-	// Attempt three times to initialize networking.
-
-	while (result < 0 && times < 3) {
-		while ((result = wiisocket_get_status()) == -1) {
-		}
-		if (result < 0) printf("Unable to initialise network, retrying...\n");
-		times++;
-	}
-
-	if (result >= 0 && times < 3) {
-		u32 ip = 0;
+	if (attempts < 3) {
 		do {
 			ip = gethostid();
-			if (!ip) printf("Unable to initialise network, retrying...\n");
-			times++;
-		} while (!ip && times < 3);
-		if (ip) printf("Network initialised.\n");
+			if (!ip) printf("Unable to obtain IP, retrying...\n");
+			attempts++;
+		} while (!ip && attempts < 3);
 	}
 
-	if (times >= 3) {
+	if (ip) {
+		printf("Unable to obtain this console's IP address.\n");
 		return true;
+	} else {
+		return false;
 	}
-	return false;
 }
 
 int load_file_to_memory(const char *filename, unsigned char **result) {
@@ -3361,9 +3368,13 @@ void repo_check() {
 	// Always grab the listing of other repos...
 	printf("Requesting repositories list... ");
 
+	// We cannot use other repositories for this request,
+	// as other repository URLs are loaded by this request.
+	CURLU* url = create_hardcoded_url("/hbb/repo_list.txt");
+
 	// Perform a request.
 	CURLcode error;
-	char* repo_response = (char *)get_request("/hbb/repo_list.txt", &error);
+	char* repo_response = (char *)handle_get_request(url, &error);
 	if (repo_list == NULL) {
 		// Check to see why.
 		if (error == CURLE_OPERATION_TIMEDOUT && codemii_backup == false) {
@@ -4383,97 +4394,50 @@ s32 request_list() {
 	return 1;
 }
 
+bool download_progress_handler(int current_size, int total_size) {
+	download_progress_counter = current_size;
+	updating_current_size = current_size;
+
+	// If updating the HBB, we need to display dots for our the progress bar.
+	if (hbb_updating == true) {
+		progress_size = (int) (remote_hb_size / 29);
+
+		int progress_count = (int) download_progress_counter / progress_size;
+		if (progress_count > progress_number) {
+			printf(".");
+			progress_number = progress_count;
+		}
+	}
+
+	// For some conditions, we need to cancel this request.
+	if (cancel_download == true && setting_prompt_cancel == false) {
+		return false;
+	}
+	else if (cancel_download == true && setting_prompt_cancel == true && cancel_confirmed == true) {
+		return false;
+	}
+	else if (hbb_updating == true && cancel_download == true) {
+		return false;
+	}
+	
+	// Success!
+	return true;
+}
 
 // Request a file from the server and store it
-s32 request_file(s32 server, FILE *f) {
-
-	char message[NET_BUFFER_SIZE];
-	s32 bytes_read = net_read(server, message, sizeof(message));
-
-	int length_til_data = 0; // Count the length of each \n part until we reach actual data
-	int tok_count = 2; // Count the number of \n tokens
-	char *temp_tok;
-	if (bytes_read == 0) { return -1; }
-	temp_tok = strtok (message,"\n");
-
-	while (temp_tok != NULL) {
-
-		// If HTTP status code is 4xx or 5xx then close connection and try again 3 times
-		if (strstr(temp_tok, "HTTP/1.1 4") || strstr(temp_tok, "HTTP/1.1 5")) {
-			printf("The server appears to be having an issue (request_file). Retrying...\n");
-			return -1;
-		}
-
-		if (strlen(temp_tok) == 1) {
-			break;
-		}
-
-		length_til_data += strlen(temp_tok);
-		tok_count++;
-		temp_tok = strtok (NULL, "\n");
+s32 request_file(char* path, FILE *f) {
+	CURLU* url = create_repo_url(path);
+	// Download!
+	CURLcode res = handle_download_request(url, f, download_progress_handler);
+	if (res == CURLE_ABORTED_BY_CALLBACK) {
+		// The user pressed cancel.
+		return -2;
+	} else if (res == CURLE_WRITE_ERROR) {
+		// An error occurred while writing the file.
+		return -1;
 	}
 
-	// New place to store the real data
-	char store_data[NET_BUFFER_SIZE];
-
-	// We'll store this to the new array
-	int q;
-	int i = 0;
-	for (q = length_til_data + tok_count; q < bytes_read; q++) {
-		store_data[i] = message[q];
-		i++;
-	}
-
-	// We now store the real data out of the first 1024 bytes
-	if (store_data != NULL) {
-		s32 bytes_written = fwrite(store_data, 1, i, f);
-		if (bytes_written < i) {
-			printf("DEBUG: fwrite error: [%i] %s\n", ferror(f), strerror(ferror(f)));
-			sleep(1);
-			return -1;
-		}
-	}
-
-	if (hbb_updating == true) { progress_size = (int) (remote_hb_size / 29); }
-
-	// Now we can continue storing the rest of the file
-	while (bytes_read > 0) {
-		bytes_read = net_read(server, message, sizeof(message));
-
-		download_progress_counter += bytes_read;
-		//if (updating >= 0) {
-			updating_current_size += bytes_read;
-		//}
-
-		// If updating the HBB, display dots as the progress bar
-		if (hbb_updating == true) {
-			int progress_count = (int) download_progress_counter / progress_size;
-
-			if (progress_count > progress_number) {
-				printf(".");
-				progress_number = progress_count;
-			}
-		}
-
-		s32 bytes_written = fwrite(message, 1, bytes_read, f);
-		if (bytes_written < bytes_read) {
-			timeout_counter = 0;
-			printf("DEBUG: fwrite error: [%i] %s\n", ferror(f), strerror(ferror(f)));
-			sleep(1);
-			return -1;
-		}
-
-		if (cancel_download == true && setting_prompt_cancel == false) {
-			return -2;
-		}
-		else if (cancel_download == true && setting_prompt_cancel == true && cancel_confirmed == true) {
-			return -2;
-		}
-		else if (hbb_updating == true && cancel_download == true) {
-			return -2;
-		}
-	}
-
+	// Success!
 	return 1;
 }
 
@@ -4504,36 +4468,13 @@ s32 request_list_file(char *file_path, char *path) {
 			return -1;
 		}
 
-		main_server = server_connect(0);
-
 		//printf("Request: /homebrew/%s%s\n", filename, extension);
 
-		char http_request[1000];
-		strcpy(http_request, "GET ");
-		strcat(http_request, path);
-
-		//strcat(http_request, " HTTP/1.0\r\n\r\n");
-		strcat(http_request, " HTTP/1.0\r\nHost: ");
-		if (setting_repo == 0) {
-			if (codemii_backup == false) {
-				strcat(http_request, MAIN_DOMAIN);
-			}
-			else {
-				strcat(http_request, FALLBACK_DOMAIN);
-			}
-		}
-		else {
-			strcat(http_request, repo_list[setting_repo].domain);
-		}
-		strcat(http_request, "\r\nCache-Control: no-cache\r\n\r\n");
-
-		write_http_reply(main_server, http_request);
-		result = request_file(main_server, f);
+		result = request_file(path, f);
 
 		retry_times++;
 
 		fclose(f);
-		net_close(main_server);
 
 		// User cancelled download
 		if (result == -2) {
@@ -4573,7 +4514,6 @@ s32 create_and_request_file(char* path1, char* appname, char *filename) {
 
 
 	s32 result = 0;
-	s32 main_server;
 	int retry_times = 0;
 
 	FILE *f;
@@ -4598,52 +4538,25 @@ s32 create_and_request_file(char* path1, char* appname, char *filename) {
 			return -1;
 		}
 
-		main_server = server_connect(0);
-
-		//printf("Request: /homebrew/%s%s\n", filename, extension);
-
-		char http_request[1000];
+		char* subdirectory = NULL;
 		if (setting_repo == 0) {
-			strcpy(http_request, "GET /hbb/");
-			if (strstr(appname,"ftpii")) {
-				strcat(http_request, "ftpii");
-			}
-			else {
-				strcat(http_request, appname);
-			}
-		}
-		else {
-			strcpy(http_request, "GET ");
-			strcat(http_request, repo_list[setting_repo].apps_dir);
-			strcat(http_request, appname);
+			// With the default servers, we should assume /hbb/.
+			subdirectory = "/hbb/";
+		} else {
+			subdirectory = repo_list[setting_repo].apps_dir;
 		}
 
-		strcat(http_request, filename);
-		strcat(http_request, " HTTP/1.0\r\nHost: ");
-		if (setting_repo == 0) {
-			if (codemii_backup == false) {
-				strcat(http_request, MAIN_DOMAIN);
-			}
-			else {
-				strcat(http_request, FALLBACK_DOMAIN);
-			}
-		}
-		else {
-			strcat(http_request, repo_list[setting_repo].domain);
-		}
-		strcat(http_request, "\r\nCache-Control: no-cache\r\n\r\n");
-		//strcat(http_request, " HTTP/1.0\r\n\r\n");
-		//strcat(http_request, " HTTP/1.0\r\nHost: " MAIN_DOMAIN "\r\nCache-Control: no-cache\r\n\r\n");
+		// subdirectory + app name + null terminator
+		char* url_path = (char *)malloc(strlen(subdirectory) + strlen(appname) + 1);
+		strcpy(url_path, subdirectory);
+		strcpy(url_path, appname);
 
-		//strcpy(testy, http_request);
-
-		write_http_reply(main_server, http_request);
-		result = request_file(main_server, f);
+		result = request_file(url_path, f);
+		free(url_path);
 
 		retry_times++;
 
 		fclose(f);
-		net_close(main_server);
 
 		// User cancelled download
 		if (result == -2) {

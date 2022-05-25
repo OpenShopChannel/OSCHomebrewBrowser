@@ -53,16 +53,14 @@ bool initialise_device();
 bool test_fat();
 bool initialize_networking();
 void initialise_fat();
+bool ensure_wifi();
 
 s32 write_exact(s32 s, char *buf, s32 length);
 s32 read_to_file(s32 s, FILE *f);
 u32 split(char *s, char sep, u32 maxsplit, char *result[]);
 
-void initialise_network();
-bool ensure_wifi();
-
 extern bool codemii_backup;
-extern bool www_passed;
+extern bool could_connect;
 
 extern int category_old_selection;
 
@@ -161,7 +159,7 @@ void add_to_stats();
 bool check_server();
 
 s32 request_list();
-s32 request_file(s32 server, FILE *f);
+s32 request_file(char* path, FILE *f);
 s32 create_and_request_file(char* path1, char* appname, char *filename);
 bool tcp_write (const s32 s, char *buffer, const u32 length);
 s32 request_list_file(char *file_path, char *path);
