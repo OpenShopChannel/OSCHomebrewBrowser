@@ -170,6 +170,8 @@ CURLcode test_head_request(CURLU *url) {
 
   // We should not fail.
   curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
+  // 5 seconds should be our maximum.
+  curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 5);
 
   CURLcode res = curl_easy_perform(curl_handle);
   curl_url_cleanup(url);

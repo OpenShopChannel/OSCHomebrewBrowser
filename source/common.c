@@ -3375,7 +3375,7 @@ void repo_check() {
 	// Perform a request.
 	CURLcode error;
 	char* repo_response = (char *)handle_get_request(url, &error);
-	if (repo_list == NULL) {
+	if (repo_response == NULL) {
 		// Check to see why.
 		if (error == CURLE_OPERATION_TIMEDOUT && codemii_backup == false) {
 			// Attempt our backup server on the next attempt, as we are not currently.
