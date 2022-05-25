@@ -265,14 +265,16 @@ int main(int argc, char **argv) {
 	ES_GetDeviceID(&temp_esid);
 	sprintf(esid, "%d", temp_esid);
 	//printf("ES_GetDeviceID = %s\n",esid);
-	if (esid <= 0) { printf("ESID error - You won't be able to rate applications.\n"); }
-
-	if (setting_online == true) {
-		initialize_networking();
+	if (esid <= 0) {
+		printf("ESID error - You won't be able to rate applications.\n");
 	}
 
 	initialise_fat();
 	load_settings();
+
+	if (setting_online == true) {
+		initialize_networking();
+	}
 
 	if (setting_online == true && setting_server == false) {
 		// Ensure 

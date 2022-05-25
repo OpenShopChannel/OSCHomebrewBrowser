@@ -115,7 +115,6 @@ int category_old_selection = 2;
 long remote_hb_size = 0;
 char update_text[1000];
 
-bool hostname_ok = true;
 bool codemii_backup = false;
 bool www_passed = false;
 
@@ -4480,9 +4479,7 @@ s32 request_file(s32 server, FILE *f) {
 
 
 s32 request_list_file(char *file_path, char *path) {
-
 	s32 result = 0;
-	s32 main_server;
 	int retry_times = 0;
 
 	FILE *f;

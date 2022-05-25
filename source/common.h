@@ -160,7 +160,6 @@ void download_queue_size();
 void add_to_stats();
 bool check_server();
 
-s32 server_connect(int repo_bypass);
 s32 request_list();
 s32 request_file(s32 server, FILE *f);
 s32 create_and_request_file(char* path1, char* appname, char *filename);
