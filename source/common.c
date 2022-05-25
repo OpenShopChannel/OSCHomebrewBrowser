@@ -2795,9 +2795,9 @@ bool ensure_wifi() {
 	}
 
 	if (ip) {
-		printf("Unable to obtain this console's IP address.\n");
 		return true;
 	} else {
+		printf("Unable to obtain this console's IP address.\n");
 		return false;
 	}
 }
@@ -4427,6 +4427,7 @@ bool download_progress_handler(int current_size, int total_size) {
 // Request a file from the server and store it
 s32 request_file(char* path, FILE *f) {
 	CURLU* url = create_repo_url(path);
+
 	// Download!
 	CURLcode res = handle_download_request(url, f, download_progress_handler);
 	if (res == CURLE_ABORTED_BY_CALLBACK) {
@@ -4547,11 +4548,14 @@ s32 create_and_request_file(char* path1, char* appname, char *filename) {
 		}
 
 		// subdirectory + app name + null terminator
-		char* url_path = (char *)malloc(strlen(subdirectory) + strlen(appname) + 1);
-		strcpy(url_path, subdirectory);
-		strcpy(url_path, appname);
+		int length = strlen(subdirectory) + strlen(appname) + strlen(filename) + 1;
+		char* url_path = (char *)malloc(length);
+		strlcpy(url_path, subdirectory, length);
+		strlcat(url_path, appname, length);
+		strlcat(url_path, filename, length);
 
 		result = request_file(url_path, f);
+		
 		free(url_path);
 
 		retry_times++;

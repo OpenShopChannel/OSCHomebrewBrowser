@@ -286,7 +286,7 @@ int main(int argc, char **argv) {
 
 		while (could_connect == false && attempt_count < 3) {
 			// We'll HEAD the repository list to test connectivity.
-			CURLU* test_url = create_hardcoded_url("/hbb/list.txt");
+			CURLU* test_url = create_hardcoded_url("/hbb/repo_list.txt");
 
 			// Notify the user of what's going on.
 			char* domain = NULL;

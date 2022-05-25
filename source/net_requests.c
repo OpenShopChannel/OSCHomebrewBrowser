@@ -30,12 +30,12 @@ CURLU *create_hardcoded_url(char *path) {
 CURLU *create_repo_url(char *path) {
   // Determine what server we want to request with.
   if (setting_repo == 0) {
+    // Defer to our default logic.
+    return create_hardcoded_url(path);
+  } else {
     // If the user has specified an alternative repo,
     // we should use its specified domain.
     return domain_with_path(repo_list[setting_repo].domain, path);
-  } else {
-    // Defer to our default logic.
-    return create_hardcoded_url(path);
   }
 }
 
