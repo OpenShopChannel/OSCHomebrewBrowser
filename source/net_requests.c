@@ -121,8 +121,9 @@ static size_t curl_file_callback(void *ptr, size_t size, size_t chunk_size,
 }
 
 // Notifies the passed function about callback state.
-int curl_file_progress(void *dl_cb, curl_off_t dl_total, curl_off_t dl_now,
-                       curl_off_t up_total, curl_off_t up_now) {
+static size_t curl_file_progress(void *dl_cb, curl_off_t dl_total,
+                                 curl_off_t dl_now, curl_off_t up_total,
+                                 curl_off_t up_now) {
   // We only call with download progress, as we are not uploading.
   bool should_continue = ((download_callback *)dl_cb)(dl_now, dl_total);
 
@@ -145,6 +146,7 @@ CURLcode handle_download_request(CURLU *url, FILE *f,
   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_file_callback);
   curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, f);
   // Allow the invoking function to know our progress.
+  curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 0);
   curl_easy_setopt(curl_handle, CURLOPT_XFERINFOFUNCTION, curl_file_progress);
   curl_easy_setopt(curl_handle, CURLOPT_XFERINFODATA, dl_cb);
 

@@ -55,10 +55,6 @@ bool initialize_networking();
 void initialise_fat();
 bool ensure_wifi();
 
-s32 write_exact(s32 s, char *buf, s32 length);
-s32 read_to_file(s32 s, FILE *f);
-u32 split(char *s, char sep, u32 maxsplit, char *result[]);
-
 extern bool codemii_backup;
 extern bool could_connect;
 

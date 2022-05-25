@@ -25,7 +25,7 @@ void *handle_get_request(CURLU *url, CURLcode *error);
 
 // The definition for the callback function for download progress.
 // Return false to cancel the request.
-typedef bool download_callback(int current_size, int total_size);
+typedef bool download_callback(curl_off_t current_size, curl_off_t total_size);
 CURLcode handle_download_request(CURLU *url, FILE *f,
                                  download_callback *download_callback);
 CURLcode test_head_request(CURLU *url);

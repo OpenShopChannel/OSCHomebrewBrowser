@@ -34,8 +34,6 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "GRRLIB/GRRLIB.h"
 #include "common.h"
 #include "net_requests.h"
-//#include "loop_mod.h"
-//#include "md5.h"
 
 // Modified Tantric FAT code
 #include <sdcard/wiisd_io.h>
@@ -217,19 +215,6 @@ size_t result;
 // Time info
 struct tm * timeinfo;
 time_t app_time;
-
-char* get_error_msg(s32 error_code) {
-	switch (error_code) {
-		case -6:
-			return "Are you connected to the internet? Try running a connection test in the Wii System Settings.";
-			break;
-		case -81:
-			return "Is your SD card write-locked? Is the server in settings.xml not set to 0?";
-			break;
-		default:
-			return "Undocumented error code. Please contact us on our Twitter or Discord.";
-	}
-}
 
 static void reset_called() {
 	reset = 1;
@@ -992,7 +977,7 @@ static void *run_download_thread(void *arg) {
 }
 
 u8 initialise_download() {
-	s32 result = LWP_CreateThread(&download_thread, run_download_thread, NULL, NULL, 0, 80);
+	s32 result = LWP_CreateThread(&download_thread, run_download_thread, NULL, NULL, 16384, 80);
 	return result;
 }
 
@@ -3382,12 +3367,12 @@ void repo_check() {
 			codemii_backup = true;
 		}
 
-		printf("Failed to receive Repositories list.\n");
+		printf("Failed to receive Repositories list: %s\n", curl_easy_strerror(error));
 		return;
 	}
 
 	// Parse repository data
-	char* pos = 0;
+	char* pos = repo_response;
 	int line_type = 0;
 	bool seen_version = false;
 
@@ -3404,14 +3389,16 @@ void repo_check() {
 		pos[0] = '\0';
 		char* current_line = old_pos;
 
+		printf("%s\n", current_line);
+
 		// Our first line is expected to be the literal "1".
 		if (seen_version == false) {
 			if (strcmp(current_line, "1") == 0) {
 				seen_version = true;
 			}	else {
 				// Seems we didn't find it.
-				continue;
 			}
+			continue;
 		}
 
 		// We're now ready to read our repo info.
@@ -3430,6 +3417,7 @@ void repo_check() {
 		if (line_type == 3) {
 			strcpy(repo_list[repo_count].apps_dir, current_line);
 			repo_count++;
+
 			line_type = 0;
 		}
 
@@ -3449,7 +3437,7 @@ void repo_check() {
 			printf("Press Wiimote '2' or Gamecube 'X' button to revert to the CodeMii Repo\n\n");
 		}
 	} else if (repo_count == 0) {
-		printf("Failed to receive Repositories list.\n");
+		printf("Failed to parse Repositories list.\n");
 	}
 }
 
@@ -4394,7 +4382,7 @@ s32 request_list() {
 	return 1;
 }
 
-bool download_progress_handler(int current_size, int total_size) {
+bool download_progress_handler(curl_off_t current_size, curl_off_t total_size) {
 	download_progress_counter = current_size;
 	updating_current_size = current_size;
 
