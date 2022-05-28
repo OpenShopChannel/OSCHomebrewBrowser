@@ -6,6 +6,7 @@
 // TODO(spotlightishere): We rely on common.h for file-related
 // information. Let's migrate this all to its own file.
 #include "common.h"
+#include "storage.h"
 
 #pragma mark - Global variables
 
@@ -32,9 +33,6 @@ bool setting_dischar = false;
 bool setting_wiiside = false;
 bool setting_update = true;
 bool setting_server = false;
-
-bool sd_mounted = false;
-bool usb_mounted = false;
 
 #pragma mark - Settings manipulation functions
 

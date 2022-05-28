@@ -27,8 +27,5 @@ extern bool setting_wiiside;
 extern bool setting_update;
 extern bool setting_server;
 
-extern bool sd_mounted;
-extern bool usb_mounted;
-
 void update_settings();
 void load_settings();

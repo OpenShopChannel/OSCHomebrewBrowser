@@ -50,9 +50,7 @@ void initialise();
 void SetScreen();
 void clearscreen();
 bool initialise_device();
-bool test_fat();
 bool initialize_networking();
-void initialise_fat();
 bool ensure_wifi();
 
 extern bool codemii_backup;
