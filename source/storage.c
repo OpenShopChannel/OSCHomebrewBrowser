@@ -13,7 +13,9 @@
 #include "settings.h"
 #include "storage.h"
 
-#pragma mark - FAT filesystem functions
+////////////////////////////////////////////////////
+// FAT filesystem functions
+////////////////////////////////////////////////////
 
 // Used to store things such as "sd:/" or "usb:/".
 char rootdir[10];
@@ -84,7 +86,9 @@ bool test_fat() {
 	return true;
 }
 
-#pragma mark - Device initialisation
+////////////////////////////////////////////////////
+// Device initialisation
+////////////////////////////////////////////////////
 
 const DISC_INTERFACE* sd = &__io_wiisd;
 const DISC_INTERFACE* usb = &__io_usbstorage;

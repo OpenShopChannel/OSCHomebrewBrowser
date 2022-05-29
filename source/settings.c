@@ -8,7 +8,9 @@
 #include "common.h"
 #include "storage.h"
 
-#pragma mark - Global variables
+////////////////////////////////////////////////////
+// Global variables used throughout the browser
+////////////////////////////////////////////////////
 
 bool setting_check_size = true;
 bool setting_sd_card = true;
@@ -34,7 +36,9 @@ bool setting_wiiside = false;
 bool setting_update = true;
 bool setting_server = false;
 
-#pragma mark - Settings manipulation functions
+////////////////////////////////////////////////////
+// Settings manipulation functions
+////////////////////////////////////////////////////
 
 void load_settings() {
 	mxml_node_t *tree;
