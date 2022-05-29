@@ -26,8 +26,6 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #define FONTSIZE_MEDIUM 48
 #define FONTSIZE_LARGE 72
 
-extern const char *CRLF;
-extern const u32 CRLF_LENGTH;
 extern char esid[50];
 extern int xfb_height;
 
@@ -41,6 +39,7 @@ u8 initialise_rating();
 u8 initialise_update_rating();
 u8 initialise_music();
 u8 initialise_request();
+void suspend_reset_thread();
 void initialise_mod_music();
 void stop_mod_music();
 void play_mod_music();
@@ -114,7 +113,6 @@ extern bool download_icon_sleeping;
 extern int repo_count;
 
 extern int update_xml;
-extern char testy[200];
 
 extern bool show_updated_apps;
 extern int updated_apps_count;
@@ -129,17 +127,12 @@ bool check_server();
 s32 request_list();
 s32 request_file(char* path, FILE *f);
 s32 create_and_request_file(char* path1, char* appname, char *filename);
-bool tcp_write (const s32 s, char *buffer, const u32 length);
 s32 request_list_file(char *file_path, char *path);
 
 int load_file_to_memory(const char *filename, unsigned char **result);
 void clear_list();
 void clear_temp_list();
 void clear_store_list();
-int remove_file(char* path);
-int remove_dir(char* path);
-int delete_dir_files(char* path);
-int create_dir(char* path);
 bool unzipArchive(char * zipfilepath, char * unzipfolderpath);
 void check_missing_files();
 void update_check();

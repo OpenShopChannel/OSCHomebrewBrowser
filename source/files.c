@@ -6,31 +6,28 @@
 #include <sys/unistd.h>
 
 // Removes a file
-int remove_file(char* path) {
+int remove_file(char *path) {
 	FILE *f = fopen(path, "rb");
 
 	// File not found
 	if (f == NULL) {
 		return 1;
 	}
-	else {
-		fclose(f);
-		unlink(path);
+	fclose(f);
+	unlink(path);
 
-		// Check file was removed
-		f = fopen(path, "rb");
-
-		if (f == NULL) {
-			return 1;
-		}
-		fclose(f);
+	// Check file was removed
+	f = fopen(path, "rb");
+	if (f == NULL) {
+		return 1;
 	}
 
+	fclose(f);
 	return -1;
 }
 
 // Removes a directory
-int remove_dir(char* path) {
+int remove_dir(char *path) {
 
 	if (opendir(path)) {
 		unlink(path);
@@ -43,11 +40,11 @@ int remove_dir(char* path) {
 }
 
 // Delete all files in a directory
-int delete_dir_files(char* path) {
-  struct dirent *dent = NULL;
-  struct stat st;
+int delete_dir_files(char *path) {
+	struct dirent *dent = NULL;
+	struct stat st;
 
-	DIR* dir = opendir(path);
+	DIR *dir = opendir(path);
 	if (dir != NULL) {
 		char temp_path[MAXPATHLEN];
 		while ((dent = readdir(dir)) != NULL) {
@@ -56,7 +53,7 @@ int delete_dir_files(char* path) {
 			strcat(temp_path, dent->d_name);
 			stat(temp_path, &st);
 
-			if(!(S_ISDIR(st.st_mode))) {
+			if (!(S_ISDIR(st.st_mode))) {
 				remove_file(temp_path);
 			}
 		}
@@ -67,10 +64,7 @@ int delete_dir_files(char* path) {
 }
 
 // Creates a directory
-int create_dir(char* path) {
-
-	printf("%s\n",path);
-
+int create_dir(char *path) {
 	if (!opendir(path)) {
 		mkdir(path, 0777);
 		if (!opendir(path)) {

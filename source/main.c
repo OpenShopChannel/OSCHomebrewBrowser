@@ -30,6 +30,7 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "unzip/miniunz.h"
 #include "common.h"
 #include "settings.h"
+#include "storage.h"
 #include "net_requests.h"
 #include "GRRLIB/GRRLIB.h"
 #include "GRRLIB_font1_png.h"
@@ -163,9 +164,6 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "arrow_png.h"
 
 #include "GRRLIB/GRRLIB.h"
-
-#define METHOD_SD 1
-#define METHOD_USB 2
 
 extern Mtx GXmodelView2D;
 

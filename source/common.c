@@ -13,7 +13,6 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include <math.h>
 #include <wiisocket.h>
 #include <curl/curl.h>
-//#include <gcmodplay.h>
 #include <asndlib.h>
 #include <ogc/lwp_watchdog.h>
 #include <ogcsys.h>
@@ -33,6 +32,7 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "unzip/miniunz.h"
 #include "GRRLIB/GRRLIB.h"
 #include "common.h"
+#include "files.h"
 #include "net_requests.h"
 #include "settings.h"
 
@@ -1522,9 +1522,6 @@ static void *run_request_thread(void *arg) {
 			}
 		}
 		else {
-			//char list_file[100] = "/hbb/homebrew_browser/listv030.txt";
-			//repo_list[setting_repo].list_file
-
 			if (setting_use_sd == true) {
 				if (request_list_file("sd:/apps/homebrew_browser/external_repo_list.txt", repo_list[setting_repo].list_file) == 1) {
 					printf("Homebrew List received.\n");
