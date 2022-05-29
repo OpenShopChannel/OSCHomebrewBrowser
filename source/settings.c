@@ -6,6 +6,7 @@
 // TODO(spotlightishere): We rely on common.h for file-related
 // information. Let's migrate this all to its own file.
 #include "common.h"
+#include "files.h"
 #include "storage.h"
 
 ////////////////////////////////////////////////////
@@ -40,6 +41,31 @@ bool setting_server = false;
 // Settings manipulation functions
 ////////////////////////////////////////////////////
 
+// Helper function for setting integer values.
+void mxml_set_int(mxml_node_t *node, const char *name, int value) {
+	char temp[2];
+	sprintf(temp, "%i", value);
+	mxmlElementSetAttr(node, name, temp);
+}
+
+// Helper function for setting boolean values.
+void mxml_set_bool(mxml_node_t *node, const char *name, bool value) {
+	mxml_set_int(node, name, value);
+}
+
+int mxml_get_int(mxml_node_t *node, const char *name) {
+	const char *value = mxmlElementGetAttr(node, name);
+	if (value == NULL) {
+		return 0;
+	} else {
+		return atoi(value);
+	}
+}
+
+bool mxml_get_bool(mxml_node_t *node, const char *name) {
+	return mxml_get_int(node, name);
+}
+
 void load_settings() {
 	mxml_node_t *tree;
 	mxml_node_t *data;
@@ -54,125 +80,79 @@ void load_settings() {
 			fp = fopen("usb:/apps/homebrew_browser/settings.xml", "rb");
 			loaded_from = false;
 		}
-	}
-	else {
+	} else {
 		fp = fopen("usb:/apps/homebrew_browser/settings.xml", "rb");
 		loaded_from = false;
 	}
 
 	if (fp != NULL) {
-		fseek (fp , 0, SEEK_END);
-		long settings_size = ftell (fp);
-		rewind (fp);
+		fseek(fp, 0, SEEK_END);
+		long settings_size = ftell(fp);
+		rewind(fp);
 
 		if (settings_size > 0) {
 
 			tree = mxmlLoadFile(NULL, fp, MXML_NO_CALLBACK);
 			fclose(fp);
 
-			data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
+			data = mxmlFindElement(tree, tree, "settings", NULL, NULL,
+								   MXML_DESCEND);
 
-			if (mxmlElementGetAttr(data,"setting_check_size")) {
-				setting_check_size = atoi(mxmlElementGetAttr(data,"setting_check_size"));
+			setting_check_size = mxml_get_bool(data, "setting_check_size");
+			setting_sd_card = mxml_get_bool(data, "setting_sd_card");
+			setting_hide_installed =
+				mxml_get_bool(data, "setting_hide_installed");
+			setting_get_rating = mxml_get_bool(data, "setting_get_rating");
+			setting_music = mxml_get_bool(data, "setting_music");
+			setting_online = mxml_get_bool(data, "setting_online");
+			setting_rumble = mxml_get_bool(data, "setting_rumble");
+			setting_update_icon = mxml_get_bool(data, "setting_update_icon");
+			setting_tool_tip =
+				mxml_get_bool(data, "setting_rsetting_tool_tipumble");
+			setting_prompt_cancel =
+				mxml_get_bool(data, "setting_prompt_cancel");
+			setting_power_off = mxml_get_bool(data, "setting_power_off");
+
+			if (mxml_get_int(data, "setting_last_boot") > 0) {
+				strcpy(setting_last_boot,
+					   mxmlElementGetAttr(data, "setting_last_boot"));
 			}
-			if (mxmlElementGetAttr(data,"setting_sd_card")) {
-				setting_sd_card = atoi(mxmlElementGetAttr(data,"setting_sd_card"));
-			}
-			if (mxmlElementGetAttr(data,"setting_hide_installed")) {
-				setting_hide_installed = atoi(mxmlElementGetAttr(data,"setting_hide_installed"));
-			}
-			if (mxmlElementGetAttr(data,"setting_get_rating")) {
-				setting_get_rating = atoi(mxmlElementGetAttr(data,"setting_get_rating"));
-			}
-			if (mxmlElementGetAttr(data,"setting_music")) {
-				setting_music = atoi(mxmlElementGetAttr(data,"setting_music"));
-			}
-			if (mxmlElementGetAttr(data,"setting_online") && setting_online == true) {
-				setting_online = atoi(mxmlElementGetAttr(data,"setting_online"));
-			}
-			if (mxmlElementGetAttr(data,"setting_rumble")) {
-				setting_rumble = atoi(mxmlElementGetAttr(data,"setting_rumble"));
-			}
-			if (mxmlElementGetAttr(data,"setting_update_icon")) {
-				setting_update_icon = atoi(mxmlElementGetAttr(data,"setting_update_icon"));
-			}
-			if (mxmlElementGetAttr(data,"setting_tool_tip")) {
-				setting_tool_tip = atoi(mxmlElementGetAttr(data,"setting_tool_tip"));
-			}
-			if (mxmlElementGetAttr(data,"setting_prompt_cancel")) {
-				setting_prompt_cancel = atoi(mxmlElementGetAttr(data,"setting_prompt_cancel"));
-			}
-			if (mxmlElementGetAttr(data,"setting_power_off")) {
-				setting_power_off = atoi(mxmlElementGetAttr(data,"setting_power_off"));
-			}
-			if (mxmlElementGetAttr(data,"setting_last_boot")) {
-				if (atoi(mxmlElementGetAttr(data,"setting_last_boot")) > 0) {
-					strcpy(setting_last_boot, mxmlElementGetAttr(data,"setting_last_boot"));
-				}
-			}
-			if (mxmlElementGetAttr(data,"setting_show_updated")) {
-				setting_show_updated = atoi(mxmlElementGetAttr(data,"setting_show_updated"));
-			}
-			if (mxmlElementGetAttr(data,"setting_use_sd")) {
-				setting_use_sd = atoi(mxmlElementGetAttr(data,"setting_use_sd"));
-			}
-			if (mxmlElementGetAttr(data,"setting_repo")) {
-				if (atoi(mxmlElementGetAttr(data,"setting_repo")) >= 0) {
-					setting_repo = atoi(mxmlElementGetAttr(data,"setting_repo"));
-				}
-			}
-			if (mxmlElementGetAttr(data,"setting_sort")) {
-				if (atoi(mxmlElementGetAttr(data,"setting_sort")) >= 0) {
-					setting_sort = atoi(mxmlElementGetAttr(data,"setting_sort"));
-				}
-			}
-			if (mxmlElementGetAttr(data,"setting_category")) {
-				if (atoi(mxmlElementGetAttr(data,"setting_category")) >= 0) {
-					setting_category = atoi(mxmlElementGetAttr(data,"setting_category"));
-				}
-			}
-			if (mxmlElementGetAttr(data,"setting_disusb")) {
-				setting_disusb = atoi(mxmlElementGetAttr(data,"setting_disusb"));
-			}
-			if (mxmlElementGetAttr(data,"setting_dischar")) {
-				setting_dischar = atoi(mxmlElementGetAttr(data,"setting_dischar"));
-			}
-			if (mxmlElementGetAttr(data,"setting_wiiside")) {
-				setting_wiiside = atoi(mxmlElementGetAttr(data,"setting_wiiside"));
-			}
-			if (mxmlElementGetAttr(data,"setting_update")) {
-				setting_update = atoi(mxmlElementGetAttr(data,"setting_update"));
-			}
-			if (mxmlElementGetAttr(data,"setting_server")) {
-				setting_server = atoi(mxmlElementGetAttr(data,"setting_server"));
-			}
+
+			setting_show_updated = mxml_get_bool(data, "setting_show_updated");
+			setting_use_sd = mxml_get_bool(data, "setting_use_sd");
+			setting_repo = mxml_get_int(data, "setting_repo");
+			setting_sort = mxml_get_int(data, "setting_sort");
+			setting_category = mxml_get_int(data, "setting_category");
+			setting_disusb = mxml_get_bool(data, "setting_disusb");
+			setting_dischar = mxml_get_bool(data, "setting_dischar");
+			setting_wiiside = mxml_get_bool(data, "setting_wiiside");
+			setting_update = mxml_get_bool(data, "setting_update");
+			setting_server = mxml_get_bool(data, "setting_server");
 
 			mxmlDelete(data);
 			mxmlDelete(tree);
 
 			if (loaded_from == true) {
 				printf("Settings loaded from SD card.\n");
-			}
-			else {
+			} else {
 				printf("Settings loaded from USB device.\n");
 			}
 
 			// Double check that setting SD is correct
 			if (setting_use_sd == true && sd_mounted == false) {
 				setting_use_sd = false;
-				printf("Settings say to load from SD, no SD found. Using USB instead.\n");
-			}
-			else if (setting_use_sd == false && usb_mounted == false) {
+				printf("Settings say to load from SD, no SD found. "
+					   "Using USB instead.\n");
+			} else if (setting_use_sd == false && usb_mounted == false) {
 				setting_use_sd = true;
-				printf("Settings say to load from USB, no USB found. Using SD instead.\n");
+				printf("Settings say to load from USB, no USB found. "
+					   "Using SD instead.\n");
 			}
 			printf("\n");
-		}
-		else {
+		} else {
 			if (loaded_from == true) {
 				remove_file("sd:/apps/homebrew_browser/settings.xml");
-			}
-			else {
+			} else {
 				remove_file("sd:/apps/homebrew_browser/settings.xml");
 			}
 		}
@@ -187,8 +167,7 @@ void load_settings() {
 	// What device to use?
 	if (setting_use_sd == true) {
 		strcpy(rootdir, "sd:/");
-	}
-	else {
+	} else {
 		strcpy(rootdir, "usb:/");
 	}
 }
@@ -201,91 +180,82 @@ void update_settings() {
 
 	data = mxmlNewElement(xml, "settings");
 
-	char set1[2];
-	sprintf(set1, "%i", setting_check_size);
-	mxmlElementSetAttr(data, "setting_check_size", set1);
-	char set2[2];
-	sprintf(set2, "%i", setting_sd_card);
-	mxmlElementSetAttr(data, "setting_sd_card", set2);
-	char set3[2];
-	sprintf(set3, "%i", setting_hide_installed);
-	mxmlElementSetAttr(data, "setting_hide_installed", set3);
-	char set4[2];
-	sprintf(set4, "%i", setting_get_rating);
-	mxmlElementSetAttr(data, "setting_get_rating", set4);
-	char set5[2];
-	sprintf(set5, "%i", setting_music);
-	mxmlElementSetAttr(data, "setting_music", set5);
-	char set6[2];
-	sprintf(set6, "%i", setting_online);
-	mxmlElementSetAttr(data, "setting_online", set6);
-	char set7[2];
-	sprintf(set7, "%i", setting_rumble);
-	mxmlElementSetAttr(data, "setting_rumble", set7);
-	char set8[2];
-	sprintf(set8, "%i", setting_update_icon);
-	mxmlElementSetAttr(data, "setting_update_icon", set8);
-	char set9[2];
-	sprintf(set9, "%i", setting_tool_tip);
-	mxmlElementSetAttr(data, "setting_tool_tip", set9);
-	char set10[2];
-	sprintf(set10, "%i", setting_prompt_cancel);
-	mxmlElementSetAttr(data, "setting_prompt_cancel", set10);
-	char set11[2];
-	sprintf(set11, "%i", setting_power_off);
-	mxmlElementSetAttr(data, "setting_power_off", set11);
+	mxml_set_bool(data, "setting_check_size", setting_check_size);
+	mxml_set_bool(data, "setting_sd_card", setting_sd_card);
+	mxml_set_bool(data, "setting_hide_installed", setting_hide_installed);
+	mxml_set_bool(data, "setting_get_rating", setting_get_rating);
+	mxml_set_bool(data, "setting_music", setting_music);
+	mxml_set_bool(data, "setting_online", setting_online);
+	mxml_set_bool(data, "setting_rumble", setting_rumble);
+	mxml_set_bool(data, "setting_update_icon", setting_update_icon);
+	mxml_set_bool(data, "setting_tool_tip", setting_tool_tip);
+	mxml_set_bool(data, "setting_prompt_cancel", setting_prompt_cancel);
+	mxml_set_bool(data, "setting_power_off", setting_power_off);
+
+	// We use setting_last_boot as a canary for time-related issues.
 	mxmlElementSetAttr(data, "setting_last_boot", setting_last_boot);
-	char set12[2];
-	sprintf(set12, "%i", setting_show_updated);
-	mxmlElementSetAttr(data, "setting_show_updated", set12);
-	char set13[2];
-	sprintf(set13, "%i", setting_use_sd);
-	mxmlElementSetAttr(data, "setting_use_sd", set13);
-	char set14[3];
-	sprintf(set14, "%i", setting_repo);
-	mxmlElementSetAttr(data, "setting_repo", set14);
-	char set15[2];
-	sprintf(set15, "%i", setting_sort);
-	mxmlElementSetAttr(data, "setting_sort", set15);
-	char set16[2];
-	sprintf(set16, "%i", setting_category);
-	mxmlElementSetAttr(data, "setting_category", set16);
-	char set17[2];
-	sprintf(set17, "%i", setting_disusb);
-	mxmlElementSetAttr(data, "setting_disusb", set17);
-	char set18[2];
-	sprintf(set18, "%i", setting_dischar);
-	mxmlElementSetAttr(data, "setting_dischar", set18);
-	char set19[2];
-	sprintf(set19, "%i", setting_wiiside);
-	mxmlElementSetAttr(data, "setting_wiiside", set19);
-	char set20[2];
-	sprintf(set20, "%i", setting_update);
-	mxmlElementSetAttr(data, "setting_update", set20);
-	char set21[2];
-	sprintf(set21, "%i", setting_server);
-	mxmlElementSetAttr(data, "setting_server", set21);
+
+	mxml_set_bool(data, "setting_show_updated", setting_show_updated);
+	mxml_set_bool(data, "setting_use_sd", setting_use_sd);
+	mxml_set_int(data, "setting_repo", setting_repo);
+	mxml_set_int(data, "setting_sort", setting_sort);
+	mxml_set_int(data, "setting_category", setting_category);
+	mxml_set_bool(data, "setting_disusb", setting_disusb);
+	mxml_set_bool(data, "setting_dischar", setting_dischar);
+	mxml_set_bool(data, "setting_wiiside", setting_wiiside);
+	mxml_set_bool(data, "setting_update", setting_update);
+	mxml_set_bool(data, "setting_server", setting_server);
 
 	FILE *fp = fopen("sd:/apps/homebrew_browser/settings.xml", "wb");
 	FILE *fp1 = fopen("usb:/apps/homebrew_browser/settings.xml", "wb");
 
 	if (fp == NULL) {
-		//printf("Settings file not found\n");
-	}
-	else {
+		// printf("Settings file not found\n");
+	} else {
 		mxmlSaveFile(xml, fp, MXML_NO_CALLBACK);
 		fclose(fp);
-		//printf("saved\n");
+		// printf("saved\n");
 	}
 
 	if (fp1 == NULL) {
-		//printf("Settings file not found\n");
-	}
-	else {
+		// printf("Settings file not found\n");
+	} else {
 		mxmlSaveFile(xml, fp1, MXML_NO_CALLBACK);
 		fclose(fp1);
 	}
 
 	mxmlDelete(data);
 	mxmlDelete(xml);
+}
+
+void load_mount_settings() {
+	mxml_node_t *tree;
+	mxml_node_t *data;
+
+	FILE *fp = fopen("sd:/apps/homebrew_browser/settings.xml", "rb");
+
+	if (fp == NULL) {
+		return;
+	}
+
+	fseek(fp, 0, SEEK_END);
+	long settings_size = ftell(fp);
+	rewind(fp);
+
+	if (settings_size <= 0) {
+		fclose(fp);
+		return;
+	}
+
+	tree = mxmlLoadFile(NULL, fp, MXML_NO_CALLBACK);
+	fclose(fp);
+
+	data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
+
+	if (mxmlElementGetAttr(data, "setting_disusb")) {
+		setting_disusb = atoi(mxmlElementGetAttr(data, "setting_disusb"));
+	}
+
+	mxmlDelete(data);
+	mxmlDelete(tree);
 }

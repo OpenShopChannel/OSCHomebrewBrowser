@@ -91,7 +91,6 @@ extern bool downloading_icons;
 
 void load_no_manage_list();
 void save_no_manage_list();
-void load_mount_settings();
 
 void update_lists();
 void store_update_lists();

@@ -1648,35 +1648,6 @@ void add_to_log(char* text, ...) {
 	va_end (args);
 }
 
-void load_mount_settings() {
-	mxml_node_t *tree;
-	mxml_node_t *data;
-
-	FILE *fp = fopen("sd:/apps/homebrew_browser/settings.xml", "rb");
-
-	if (fp != NULL) {
-		fseek (fp , 0, SEEK_END);
-		long settings_size = ftell (fp);
-		rewind (fp);
-
-		if (settings_size > 0) {
-
-			tree = mxmlLoadFile(NULL, fp, MXML_NO_CALLBACK);
-			fclose(fp);
-
-			data = mxmlFindElement(tree, tree, "settings", NULL, NULL, MXML_DESCEND);
-
-			if (mxmlElementGetAttr(data,"setting_disusb")) {
-				setting_disusb = atoi(mxmlElementGetAttr(data,"setting_disusb"));
-			}
-
-			mxmlDelete(data);
-			mxmlDelete(tree);
-
-		}
-	}
-}
-
 // Save the meta.xml "name" element
 void save_xml_name() {
 

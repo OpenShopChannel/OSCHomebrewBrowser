@@ -6,7 +6,7 @@
 extern bool setting_check_size;
 extern bool setting_sd_card;
 extern bool setting_hide_installed;
-extern bool setting_get_rating; 
+extern bool setting_get_rating;
 extern bool setting_music;
 extern bool setting_online;
 extern bool setting_rumble;
@@ -29,3 +29,4 @@ extern bool setting_server;
 
 void update_settings();
 void load_settings();
+void load_mount_settings();
