@@ -13,7 +13,8 @@ The [Open Shop Channel](https://oscwii.org) version of the Homebrew Browser.
 1. Install [devkitPro](https://devkitpro.org/wiki/Getting_Started),  a toolchain for building Wii Homebrew applications. 
 2. Install the `wii-dev` package via `pacman`.
 3. Clone and install the latest [GRRLIB via its instructions](https://github.com/grrlib/grrlib#installing-grrlib).
-4. Install the latest versions of `libwiisocket`, `mbedtls`, and `libcurl` from [4TU's wii-packages](https://gitlab.com/4TU/wii-packages/-/tags).
+4. Install the `ppc-mxml` and `ppc-libvorbisidec` packages.
+5. Install the latest versions of `libwiisocket`, `mbedtls`, and `libcurl` from [4TU's wii-packages](https://gitlab.com/4TU/wii-packages/-/tags).
     1. Use the latest available tag, if possible. Packages are attached as release files.
     2. `pacman -U <filename>` to manually install.
-5. Run `make`, and enjoy!
+6. Run `make`, and enjoy!
