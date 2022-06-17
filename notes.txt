@@ -1,9 +1,0 @@
-==================================================
-Changing GFX
-==================================================
- cd source/gfx
- rm *.c && rm *.h
- for f in *.png; do raw2c $f; done
-
- # I would put this in the makefile but I have no  
- # clue what I'm doing when it comes to makefiles
