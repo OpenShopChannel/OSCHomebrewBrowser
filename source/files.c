@@ -89,7 +89,6 @@ bool create_parent_dirs(char *path) {
 		temp_path[path_len] = '\0';
 
 		// Create!
-		int result = create_dir(temp_path);
 		bool result = create_dir(temp_path);
 		if (result == false) {
 			free(temp_path);
