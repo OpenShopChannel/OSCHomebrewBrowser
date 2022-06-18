@@ -2665,6 +2665,7 @@ void repo_check() {
 	// Parse repository data
 	char* pos = repo_response;
 	int line_type = 0;
+	bool did_reset_line = false;
 	bool seen_version = false;
 
 	while (pos != NULL) {
@@ -2680,15 +2681,15 @@ void repo_check() {
 		pos[0] = '\0';
 		char* current_line = old_pos;
 
-		printf("%s\n", current_line);
-
 		// Our first line is expected to be the literal "1".
 		if (seen_version == false) {
 			if (strcmp(current_line, "1") == 0) {
 				seen_version = true;
 			}	else {
-				// Seems we didn't find it.
+				// Seems we could not find the version.
 			}
+
+			pos = pos + CRLF_LENGTH;
 			continue;
 		}
 
@@ -2710,10 +2711,18 @@ void repo_check() {
 			repo_count++;
 
 			line_type = 0;
+			did_reset_line = true;
 		}
 
 		// Our new string position is past our CRLF.
 		pos = pos + CRLF_LENGTH;
+
+		// Move on to the next line, if necessary.
+		if (did_reset_line) {
+			did_reset_line = false;
+		} else {
+			line_type += 1;
+		}
 	}
 
 	// Clean up after ourselves.
