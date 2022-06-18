@@ -114,7 +114,7 @@ char *device_path(char *path) {
 	} else {
 		strlcpy(string, "usb:/", length);
 	}
-	strlcpy(string, path, length);
+	strlcat(string, path, length);
 
 	return string;
 }
