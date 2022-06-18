@@ -95,6 +95,7 @@ void *handle_get_request(CURLU *url, CURLcode *error) {
   curl_easy_setopt(curl_handle, CURLOPT_CURLU, url);
   curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, curl_memory_callback);
   curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, (void *)&chunk);
+  curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
 
   // Perform!
   CURLcode res = curl_easy_perform(curl_handle);
@@ -150,6 +151,7 @@ CURLcode handle_download_request(CURLU *url, FILE *f,
   curl_easy_setopt(curl_handle, CURLOPT_NOPROGRESS, 0);
   curl_easy_setopt(curl_handle, CURLOPT_XFERINFOFUNCTION, curl_file_progress);
   curl_easy_setopt(curl_handle, CURLOPT_XFERINFODATA, dl_cb);
+  curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
 
   // Perform!
   CURLcode res = curl_easy_perform(curl_handle);
@@ -175,6 +177,7 @@ CURLcode test_head_request(CURLU *url) {
   curl_easy_setopt(curl_handle, CURLOPT_FAILONERROR, 1);
   // 5 seconds should be our maximum.
   curl_easy_setopt(curl_handle, CURLOPT_TIMEOUT, 5);
+  curl_easy_setopt(curl_handle, CURLOPT_FOLLOWLOCATION, 1);
 
   CURLcode res = curl_easy_perform(curl_handle);
   curl_url_cleanup(url);
