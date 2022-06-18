@@ -1297,49 +1297,39 @@ u8 initialise_update_rating() {
 
 
 static void *run_music_thread(void *arg) {
-
 	long mp3_size;
 	char * buffer;
 	size_t result;
 
-	FILE *f;
-
-	if (setting_use_sd == true) {
-		f = fopen("sd:/apps/homebrew_browser/loop.mp3", "rb");
-	}
-	else {
-		f = fopen("usb:/apps/homebrew_browser/loop.mp3", "rb");
-	}
-
+	FILE *f = hbb_fopen("loop.mp3", "rb");
 	if (f == NULL) {
+		return 0;
 	}
-	else {
-		fseek (f , 0, SEEK_END);
-		mp3_size = ftell (f);
-		rewind(f);
 
-		// allocate memory to contain the whole file:
-		buffer = (char*) malloc (sizeof(char)*mp3_size);
-		if (buffer == NULL) {perror ("   Memory error"); }
+	fseek (f , 0, SEEK_END);
+	mp3_size = ftell (f);
+	rewind(f);
 
-		// copy the file into the buffer:
-		result = fread (buffer,1,mp3_size,f);
-		if (result != mp3_size) {perror ("   Reading error"); }
+	// allocate memory to contain the whole file:
+	buffer = (char*) malloc (sizeof(char)*mp3_size);
+	if (buffer == NULL) {perror ("   Memory error"); }
 
-		fclose(f);
+	// copy the file into the buffer:
+	result = fread (buffer,1,mp3_size,f);
+	if (result != mp3_size) {perror ("   Reading error"); }
 
-		while (1) {
-			if(!MP3Player_IsPlaying()) {
-				MP3Player_PlayBuffer(buffer, mp3_size+29200, NULL);
-			}
-			if (exiting == true || stop_mp3_music == true) {
-				MP3Player_Stop();
-				stop_mp3_music = false;
-				break;
-			}
-			usleep(1000);
+	fclose(f);
+
+	while (1) {
+		if(!MP3Player_IsPlaying()) {
+			MP3Player_PlayBuffer(buffer, mp3_size+29200, NULL);
 		}
-
+		if (exiting == true || stop_mp3_music == true) {
+			MP3Player_Stop();
+			stop_mp3_music = false;
+			break;
+		}
+		usleep(1000);
 	}
 
 	return 0;
@@ -1351,121 +1341,77 @@ u8 initialise_music() {
 }
 
 void initialise_mod_music() {
-	FILE *f;
-
-	if (setting_use_sd == true) {
-		f = fopen("sd:/apps/homebrew_browser/loop.mod", "rb");
-	}
-	else {
-		f = fopen("usb:/apps/homebrew_browser/loop.mod", "rb");
-	}
+	FILE *f = hbb_fopen("loop.mod", "rb");
 
 	if (f == NULL) {
-	}
-	else {
-		fseek (f , 0, SEEK_END);
-		mod_size = ftell (f);
-		rewind(f);
-
-		// allocate memory to contain the whole file:
-		buffer = (char*) malloc (sizeof(char)*mod_size);
-		if (buffer == NULL) {fputs ("   Memory error",stderr); }
-
-		// copy the file into the buffer:
-		result = fread (buffer,1,mod_size,f);
-		if (result != mod_size) {fputs ("   Reading error",stderr); }
-
-		fclose(f);
-
-		//MODPlay_SetMOD(&play, buffer);
-		//MODPlay_Start(&play);
+		return;
 	}
 
-	/*MODPlay_SetMOD(&play, loop_mod);
-	MODPlay_Start(&play);*/
+	fseek (f , 0, SEEK_END);
+	mod_size = ftell (f);
+	rewind(f);
+
+	// allocate memory to contain the whole file:
+	buffer = (char*)malloc(sizeof(char)*mod_size);
+	if (buffer == NULL) {
+		fputs ("   Memory error",stderr);
+	}
+
+	// copy the file into the buffer:
+	result = fread(buffer, 1, mod_size, f);
+	if (result != mod_size) {
+		fputs ("   Reading error",stderr);
+	}
+
+	fclose(f);
 }
 
 void play_mod_music() {
-	bool playing_mp3 = false;
-	bool playing_ogg = false;
-
 	FILE *f;
 
 	// MP3
-	if (setting_use_sd == true) {
-		f = fopen("sd:/apps/homebrew_browser/loop.mp3", "rb");
-	}
-	else {
-		f = fopen("usb:/apps/homebrew_browser/loop.mp3", "rb");
-	}
-	if (f == NULL) {
-	}
-	else {
+	f = hbb_fopen("loop.mp3", "rb");
+	if (f != NULL) {
 		fclose(f);
-		playing_mp3 = true;
 		initialise_music();
+		return;
 	}
 
-	// OGG
-	if (playing_mp3 == false) {
-		if (setting_use_sd == true) {
-			f = fopen("sd:/apps/homebrew_browser/loop.ogg", "rb");
-		}
-		else {
-			f = fopen("usb:/apps/homebrew_browser/loop.ogg", "rb");
-		}
-		if (f == NULL) {
-		}
-		else {
+	// If there's no MP3, attempt OGG.
+	f = hbb_fopen("loop.ogg", "rb");
+	if (f != NULL) {
+		long ogg_size;
+		char * buffer;
+		size_t result;
 
-			playing_ogg = true;
+		fseek (f , 0, SEEK_END);
+		ogg_size = ftell (f);
+		rewind(f);
 
-			long ogg_size;
-			char * buffer;
-			size_t result;
+		// allocate memory to contain the whole file:
+		buffer = (char*) malloc (sizeof(char)*ogg_size);
+		if (buffer == NULL) {perror ("   Memory error"); }
 
-			fseek (f , 0, SEEK_END);
-			ogg_size = ftell (f);
-			rewind(f);
+		// copy the file into the buffer:
+		result = fread (buffer,1,ogg_size,f);
+		if (result != ogg_size) {perror ("   Reading error"); }
 
-			// allocate memory to contain the whole file:
-			buffer = (char*) malloc (sizeof(char)*ogg_size);
-			if (buffer == NULL) {perror ("   Memory error"); }
-
-			// copy the file into the buffer:
-			result = fread (buffer,1,ogg_size,f);
-			if (result != ogg_size) {perror ("   Reading error"); }
-
-			PlayOgg(buffer, ogg_size, 0, OGG_INFINITE_TIME);
-			fclose(f);
-		}
+		PlayOgg(buffer, ogg_size, 0, OGG_INFINITE_TIME);
+		fclose(f);
+		return;
 	}
 
-	// MOD
-	if (playing_mp3 == false && playing_ogg == false) {
-		if (setting_use_sd == true) {
-			f = fopen("sd:/apps/homebrew_browser/loop.mod", "rb");
-		}
-		else {
-			f = fopen("usb:/apps/homebrew_browser/loop.mod", "rb");
-		}
-		if (f == NULL) {
-		}
-		else {
-			fclose(f);
-			if (buffer == NULL) {
-				initialise_mod_music();
-			}
-			else {
-				//MODPlay_SetMOD(&play, buffer);
-				//MODPlay_Start(&play);
-			}
+	// Lastly, attempt MOD.
+	f = hbb_fopen("loop.mod", "rb");
+	if (f != NULL) {
+		fclose(f);
+		if (buffer == NULL) {
+			initialise_mod_music();
 		}
 	}
 }
 
 void stop_mod_music() {
-	//MODPlay_Stop(&play);
 	stop_mp3_music = true;
 	StopOgg();
 }
