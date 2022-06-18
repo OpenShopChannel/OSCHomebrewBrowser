@@ -1422,7 +1422,7 @@ static void *run_request_thread(void *arg) {
 			printf("Homebrew List received.\n");
 			list_received = true;
 		} else {
-			if (request_list_file("sd:/apps/homebrew_browser/external_repo_list.txt", repo_list[setting_repo].list_file) == 1) {
+			if (request_list_file("external_repo_list.txt", repo_list[setting_repo].list_file) == 1) {
 				printf("Homebrew List received.\n");
 				list_received = true;
 			}
@@ -2911,20 +2911,9 @@ s32 request_list() {
 
 	FILE *f = NULL;
 	if (setting_repo == 0) {
-		if (setting_use_sd == true) {
-			f = fopen ("sd:/apps/homebrew_browser/listv036.txt", "rb");
-		}
-		else {
-			f = fopen ("usb:/apps/homebrew_browser/listv036.txt", "rb");
-		}
-	}
-	else {
-		if (setting_use_sd == true) {
-			f = fopen ("sd:/apps/homebrew_browser/external_repo_list.txt", "rb");
-		}
-		else {
-			f = fopen ("usb:/apps/homebrew_browser/external_repo_list.txt", "rb");
-		}
+		f = hbb_fopen("listv036.txt", "rb");
+	}	else {
+		f = hbb_fopen("external_repo_list.txt", "rb");
 	}
 
 	// If file doesn't exist or can't open it then we can grab the latest file
@@ -3571,7 +3560,7 @@ s32 request_file(char* path, FILE *f) {
 }
 
 
-s32 request_list_file(char *file_path, char *path) {
+s32 request_list_file(char *filename, char *url) {
 	s32 result = 0;
 	int retry_times = 0;
 
@@ -3589,17 +3578,17 @@ s32 request_list_file(char *file_path, char *path) {
 		}
 
 		// Open file
-		f = fopen(file_path, "wb");
+		char* localized_path = app_path("homebrew_browser", filename);
+		f = fopen(localized_path, "wb");
+		free(localized_path);
 
 		// If file can't be created
 		if (f == NULL) {
-			printf("There was a problem accessing the file %s.\n", path);
+			printf("There was a problem accessing the file %s.\n", filename);
 			return -1;
 		}
 
-		//printf("Request: /homebrew/%s%s\n", filename, extension);
-
-		result = request_file(path, f);
+		result = request_file(url, f);
 
 		retry_times++;
 
@@ -3614,8 +3603,6 @@ s32 request_list_file(char *file_path, char *path) {
 			return -1;
 		}
 	}
-
-	//printf("Received %s%s.\n", appname, filename);
 
 	return 1;
 }
