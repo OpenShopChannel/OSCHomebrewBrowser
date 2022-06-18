@@ -9,12 +9,12 @@
 #include "settings.h"
 
 // Removes a file at the device-localized path.
-int remove_file(char *path) {
+bool remove_file(char *path) {
 	FILE *f = fopen(path, "rb");
 
 	// File not found
 	if (f == NULL) {
-		return 1;
+		return false;
 	}
 	fclose(f);
 	unlink(path);
@@ -22,27 +22,27 @@ int remove_file(char *path) {
 	// Check file was removed
 	f = fopen(path, "rb");
 	if (f == NULL) {
-		return 1;
+		return true;
 	}
 
 	fclose(f);
-	return -1;
+	return false;
 }
 
 // Removes a directory
-int remove_dir(char *path) {
+bool remove_dir(char *path) {
 	if (opendir(path)) {
 		unlink(path);
 		if (opendir(path)) {
-			return -1;
+			return false;
 		}
 	}
 
-	return 1;
+	return true;
 }
 
 // Delete all files in a directory
-int delete_dir_files(char *path) {
+bool delete_dir_files(char *path) {
 	struct dirent *dent = NULL;
 	struct stat st;
 
@@ -62,23 +62,23 @@ int delete_dir_files(char *path) {
 	}
 	closedir(dir);
 
-	return 1;
+	return true;
 }
 
 // Creates a directory
-int create_dir(char *path) {
+bool create_dir(char *path) {
 	if (!opendir(path)) {
 		mkdir(path, 0777);
 		if (!opendir(path)) {
-			return -1;
+			return false;
 		}
 	}
 
-	return 1;
+	return true;
 }
 
 // Creates parent directories for the given path.
-int create_parent_dirs(char *path) {
+bool create_parent_dirs(char *path) {
 	char *temp_path = (char *)malloc(strlen(path) + 1);
 	char *seperator = strchr(path, '/');
 
@@ -90,9 +90,10 @@ int create_parent_dirs(char *path) {
 
 		// Create!
 		int result = create_dir(temp_path);
-		if (result != 1) {
+		bool result = create_dir(temp_path);
+		if (result == false) {
 			free(temp_path);
-			return -1;
+			return false;
 		}
 
 		// Find the next separator.
@@ -100,7 +101,7 @@ int create_parent_dirs(char *path) {
 	}
 
 	free(temp_path);
-	return 0;
+	return true;
 }
 
 // Returns the given path with the device name appended.

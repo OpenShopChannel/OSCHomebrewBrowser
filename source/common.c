@@ -569,8 +569,7 @@ static void *run_download_thread(void *arg) {
 				strcpy(temp_create,"usb:");
 			}
 			strcat(temp_create, split_tok);
-			//if (create_dir(split_tok) != 1) {
-			if (create_dir(temp_create) != 1) {
+			if (create_dir(temp_create) == false) {
 				download_status = false;
 				error_number = 2;
 			}
@@ -3763,11 +3762,9 @@ s32 create_and_request_file(char* path1, char* appname, char *filename) {
 // Downloads the given filename for this Homebrew application.
 s32 download_file(char* appname, char *filename) {
 	char* path = app_path(appname, filename);
-	printf("Called with app %s and filename %s\n", appname, filename);
-	printf("Attempting to eventually write to %s\n", path);
 
-	int success = create_parent_dirs(path);
-	if (success != 1) {
+	bool success = create_parent_dirs(path);
+	if (success == false) {
 		// Failed to create parent dirs
 		printf("Could not create directories for %s.\n", path);
 		free(path);
