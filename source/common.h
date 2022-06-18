@@ -126,7 +126,7 @@ bool check_server();
 
 s32 request_list();
 s32 request_file(char* path, FILE *f);
-s32 create_and_request_file(char* path1, char* appname, char *filename);
+s32 download_file(char* appname, char *filename);
 s32 request_list_file(char *file_path, char *path);
 
 int load_file_to_memory(const char *filename, unsigned char **result);

@@ -231,12 +231,11 @@ static void *run_icons_thread(void *arg) {
 		bool update_img_file = false;
 
 		char img_path[150];
-		strcpy(img_path, rootdir);
-		strcat(img_path, "apps/homebrew_browser/temp/");
+		strcpy(img_path, "apps/homebrew_browser/temp/");
 		strcat(img_path, total_list[x].name);
 		strcat(img_path, ".png");
 
-		FILE *f = fopen(img_path, "rb");
+		FILE *f = hbb_fopen(img_path, "rb");
 
 		// If file doesn't exist or can't open it then we can grab the latest file
 		if (f == NULL) {
@@ -600,33 +599,16 @@ static void *run_download_thread(void *arg) {
 
 		// Problems opening the file? Then download the icon.png
 		if (f == NULL) {
-
 			if (strcmp(store_homebrew_list[0].name,"ftpii") == 0) {
-				if (setting_use_sd == true) {
-					if (create_and_request_file("sd:/apps/", store_homebrew_list[0].user_dirname, "/icon.png") != 1) {
-						download_status = false;
-						error_number = 3;
-					}
-				}
-				else {
-					if (create_and_request_file("usb:/apps/", store_homebrew_list[0].user_dirname, "/icon.png") != 1) {
-						download_status = false;
-						error_number = 3;
-					}
+				if (download_file(store_homebrew_list[0].user_dirname, "icon.png") != 1) {
+					download_status = false;
+					error_number = 3;
 				}
 			}
 			else {
-				if (setting_use_sd == true) {
-					if (create_and_request_file("sd:/apps/", store_homebrew_list[0].name, "/icon.png") != 1) {
-						download_status = false;
-						error_number = 3;
-					}
-				}
-				else {
-					if (create_and_request_file("usb:/apps/", store_homebrew_list[0].name, "/icon.png") != 1) {
-						download_status = false;
-						error_number = 3;
-					}
+				if (download_file(store_homebrew_list[0].name, "icon.png") != 1) {
+					download_status = false;
+					error_number = 3;
 				}
 			}
 
@@ -638,31 +620,15 @@ static void *run_download_thread(void *arg) {
 
 			if (setting_update_icon == true) {
 				if (strcmp(store_homebrew_list[0].name,"ftpii") == 0) {
-					if (setting_use_sd == true) {
-						if (create_and_request_file("sd:/apps/", store_homebrew_list[0].user_dirname, "/icon.png") != 1) {
-							download_status = false;
-							error_number = 3;
-						}
-					}
-					else {
-						if (create_and_request_file("usb:/apps/", store_homebrew_list[0].user_dirname, "/icon.png") != 1) {
-							download_status = false;
-							error_number = 3;
-						}
+					if (download_file(store_homebrew_list[0].user_dirname, "icon.png") != 1) {
+						download_status = false;
+						error_number = 3;
 					}
 				}
 				else {
-					if (setting_use_sd == true) {
-						if (create_and_request_file("sd:/apps/", store_homebrew_list[0].name, "/icon.png") != 1) {
-							download_status = false;
-							error_number = 3;
-						}
-					}
-					else {
-						if (create_and_request_file("usb:/apps/", store_homebrew_list[0].name, "/icon.png") != 1) {
-							download_status = false;
-							error_number = 3;
-						}
+					if (download_file(store_homebrew_list[0].name, "icon.png") != 1) {
+						download_status = false;
+						error_number = 3;
 					}
 				}
 			}
@@ -1507,41 +1473,19 @@ void stop_mod_music() {
 
 static void *run_request_thread(void *arg) {
 	if (setting_online == true) {
-		if (setting_repo == 0) {
-			if (setting_use_sd == true) {
-				if (create_and_request_file("sd:/apps/", "homebrew_browser", "/listv036.txt") == 1) {
-					printf("Homebrew List received.\n");
-					list_received = true;
-				}
-			}
-			else {
-				if (create_and_request_file("usb:/apps/", "homebrew_browser", "/listv036.txt") == 1) {
-					printf("Homebrew List received.\n");
-					list_received = true;
-				}
+		if (download_file("homebrew_browser", "listv036.txt") == 1) {
+			printf("Homebrew List received.\n");
+			list_received = true;
+		} else {
+			if (request_list_file("sd:/apps/homebrew_browser/external_repo_list.txt", repo_list[setting_repo].list_file) == 1) {
+				printf("Homebrew List received.\n");
+				list_received = true;
 			}
 		}
-		else {
-			if (setting_use_sd == true) {
-				if (request_list_file("sd:/apps/homebrew_browser/external_repo_list.txt", repo_list[setting_repo].list_file) == 1) {
-					printf("Homebrew List received.\n");
-					list_received = true;
-				}
-			}
-			else {
-				if (request_list_file("usb:/apps/homebrew_browser/external_repo_list.txt", repo_list[setting_repo].list_file) == 1) {
-					printf("Homebrew List received.\n");
-					list_received = true;
-				}
-			}
-		}
-
-	}
-	else if (setting_repo == 0) {
+	} else if (setting_repo == 0) {
 		printf("Using Homebrew List on file.\n");
 		list_received = true;
-	}
-	else {
+	} else {
 		printf("Can't use Homebrew List on file.\n");
 	}
 
@@ -2471,50 +2415,25 @@ void download_queue_size() {
 
 // Check if icon.png or meta.xml is missing and if so download them
 void check_missing_files() {
-
-	if (setting_use_sd == true) {
-		// Open the file
-		FILE *f = fopen("sd:/apps/homebrew_browser/icon.png", "rb");
-
-		if (f == NULL) {
-			create_and_request_file("sd:/apps/", "homebrew_browser", "/icon.png");
-		}
-
-		// Open the file
-		FILE *f1 = fopen("sd:/apps/homebrew_browser/meta.xml", "rb");
-
-		if (f1 == NULL) {
-			create_and_request_file("sd:/apps/", "homebrew_browser", "/meta.xml");
-		}
-
-		// Open the file
-		FILE *f2 = fopen("sd:/apps/homebrew_browser/loop.mod", "rb");
-
-		if (f2 == NULL) {
-			create_and_request_file("sd:/apps/", "homebrew_browser", "/loop.mod");
-		}
+	FILE* icon = hbb_fopen("icon.png", "rb");
+	if (icon == NULL) {
+		download_file("homebrew_browser", "icon.png");
+	} else {
+		fclose(icon);
 	}
-	else {
-		// Open the file
-		FILE *f = fopen("usb:/apps/homebrew_browser/icon.png", "rb");
 
-		if (f == NULL) {
-			create_and_request_file("usb:/apps/", "homebrew_browser", "/icon.png");
-		}
+	FILE* meta = hbb_fopen("meta.xml", "rb");
+	if (meta == NULL) {
+		download_file("homebrew_browser", "meta.xml");
+	} else {
+		fclose(meta);
+	}
 
-		// Open the file
-		FILE *f1 = fopen("usb:/apps/homebrew_browser/meta.xml", "rb");
-
-		if (f1 == NULL) {
-			create_and_request_file("usb:/apps/", "homebrew_browser", "/meta.xml");
-		}
-
-		// Open the file
-		FILE *f2 = fopen("usb:/apps/homebrew_browser/loop.mod", "rb");
-
-		if (f2 == NULL) {
-			create_and_request_file("usb:/apps/", "homebrew_browser", "/loop.mod");
-		}
+	FILE* loop = hbb_fopen("loop.mod", "rb");
+	if (loop == NULL) {
+		download_file("homebrew_browser", "loop.mod");
+	} else {
+		fclose(loop);
 	}
 }
 
@@ -2522,115 +2441,65 @@ void check_missing_files() {
 void check_temp_files() {
 	int x = 0;
 
-	if (setting_use_sd == true) {
-		char path[100] = "sd:/apps/homebrew_browser/temp/";
-		dir = opendir(path);
 
-		if (dir != NULL) {
-			char temp_path[MAXPATHLEN];
-			while ((dent=readdir(dir)) != NULL) {
-				strcpy(temp_path, path);
-				strcat(temp_path, "/");
-				strcat(temp_path, dent->d_name);
-				stat(temp_path, &st);
+	char* temp_files_zip = app_path("homebrew_browser", "temp_files.zip");
+	char* temp_files_dir = app_path("homebrew_browser", "temp");
 
-				if(!(S_ISDIR(st.st_mode))) {
-					x++;
-					if (x > 200) {
-						break;
-					}
+	dir = opendir(temp_files_dir);
+
+	if (dir != NULL) {
+		char temp_path[MAXPATHLEN];
+		while ((dent=readdir(dir)) != NULL) {
+			strcpy(temp_path, temp_files_dir);
+			strcat(temp_path, "/");
+			strcat(temp_path, dent->d_name);
+			stat(temp_path, &st);
+
+			if(!(S_ISDIR(st.st_mode))) {
+				x++;
+				if (x > 200) {
+					break;
 				}
 			}
-		}
-		closedir(dir);
-
-		if (x < 200) {
-			printf("\n\nDownloading zip file containing current image files. \nYou can skip this by holding down the B button but it's highly recommended that you don't.\n");
-
-			hbb_updating = true;
-			remote_hb_size = 1874386;
-
-			if (create_and_request_file("sd:/apps/", "homebrew_browser", "/temp_files.zip") != 1) {
-				printf("\n\nFailed to download zip file.\n");
-			}
-			else {
-				printf("\n\nExtracting image files...\n");
-				if (unzipArchive("sd:/apps/homebrew_browser/temp_files.zip", "sd:/apps/homebrew_browser/temp/") == true) {
-					if (cancel_extract == false) {
-						printf("\nDownloaded and Extracted images successfully.\n\n");
-					}
-					else {
-						printf("\n");
-					}
-				}
-			}
-			remove_file("sd:/apps/homebrew_browser/temp_files.zip");
-			hbb_updating = false;
-
-			if (cancel_download == true || cancel_extract == true) {
-				printf("\nCancelled download and extracting of image files.");
-				cancel_download = false;
-				cancel_extract = false;
-			}
-
-			sleep(2);
 		}
 	}
-	else {
-		char path[100] = "usb:/apps/homebrew_browser/temp/";
-		dir = opendir(path);
+	closedir(dir);
 
-		if (dir != NULL) {
-			char temp_path[MAXPATHLEN];
-			while ((dent=readdir(dir)) != NULL) {
-				strcpy(temp_path, path);
-				strcat(temp_path, "/");
-				strcat(temp_path, dent->d_name);
-				stat(temp_path, &st);
+	if (x < 200) {
+		printf("\n\nDownloading zip file containing current image files. \nYou can skip this by holding down the B button but it's highly recommended that you don't.\n");
 
-				if(!(S_ISDIR(st.st_mode))) {
-					x++;
-					if (x > 200) {
-						break;
-					}
+		hbb_updating = true;
+		remote_hb_size = 1874386;
+
+		if (download_file("homebrew_browser", "temp_files.zip") != 1) {
+			printf("\n\nFailed to download zip file.\n");
+		} else {
+			printf("\n\nExtracting image files...\n");
+			if (unzipArchive(temp_files_zip, temp_files_dir) == true) {
+				if (cancel_extract == false) {
+					printf("\nDownloaded and Extracted images successfully.\n\n");
+				}
+				else {
+					printf("\n");
 				}
 			}
+
 		}
-		closedir(dir);
 
-		if (x < 200) {
-			printf("\n\nDownloading zip file containing current image files. \nYou can skip this by holding down the B button but it's highly recommended that you don't.\n");
+		remove_file(temp_files_zip);
+		hbb_updating = false;
 
-			hbb_updating = true;
-			remote_hb_size = 1874386;
-
-			if (create_and_request_file("usb:/apps/", "homebrew_browser", "/temp_files.zip") != 1) {
-				printf("\n\nFailed to download zip file.\n");
-			}
-			else {
-				printf("\n\nExtracting image files...\n");
-				if (unzipArchive("usb:/apps/homebrew_browser/temp_files.zip", "usb:/apps/homebrew_browser/temp/") == true) {
-					if (cancel_extract == false) {
-						printf("\nDownloaded and Extracted images successfully.\n\n");
-					}
-					else {
-						printf("\n");
-					}
-				}
-				unzipArchive("", "");
-			}
-			remove_file("usb:/apps/homebrew_browser/temp_files.zip");
-			hbb_updating = false;
-
-			if (cancel_download == true || cancel_extract == true) {
-				printf("\nCancelled download and extracting of image files.");
-				cancel_download = false;
-				cancel_extract = false;
-			}
-
-			sleep(2);
+		if (cancel_download == true || cancel_extract == true) {
+			printf("\nCancelled download and extracting of image files.");
+			cancel_download = false;
+			cancel_extract = false;
 		}
+
+		sleep(2);
 	}
+
+	free(temp_files_zip);
+	free(temp_files_dir);
 }
 
 void add_to_stats() {
@@ -2870,14 +2739,13 @@ void update_check() {
 
 	return;
 
+	char* boot_dol_path = app_path("homebrew_browser", "boot.dol");
+	char* boot_bak_path = app_path("homebrew_browser", "boot.bak");
+	char* meta_xml_path = app_path("homebrew_browser", "meta.xml");
+	char* meta_bak_path = app_path("homebrew_browser", "meta.bak");
+
 	// Open the file
-	FILE *f;
-	if (setting_use_sd == true) {
-		f = fopen("sd:/apps/homebrew_browser/boot.dol", "rb");
-	}
-	else {
-		f = fopen("usb:/apps/homebrew_browser/boot.dol", "rb");
-	}
+	FILE *f = hbb_fopen("boot.dol", "rb");
 
 	// Problems opening the file?
 	if (f == NULL) {
@@ -2894,31 +2762,18 @@ void update_check() {
 			// Grab the latest HBB
 			if (pressed & WPAD_BUTTON_A) {
 				hbb_updating = true;
-				s32 hbb_update = 0;
 				printf("Retrieving the latest version of the Homebrew Browser...\n");
 
-				if (setting_use_sd == true) {
-					hbb_update = create_and_request_file("sd:/apps/", "homebrew_browser", "/boot.dol");
-				}
-				else {
-					hbb_update = create_and_request_file("usb:/apps/", "homebrew_browser", "/boot.dol");
-				}
-
+				s32 hbb_update = download_file("homebrew_browser", "boot.dol");
 				if (hbb_update == -1) {
 					printf("\nCould not install the Homebrew Browser.\n\n");
 					running_update = false;
 				}
 				else {
-					if (setting_use_sd == true) {
-						create_and_request_file("sd:/apps/", "homebrew_browser", "/meta.xml");
-						create_and_request_file("sd:/apps/", "homebrew_browser", "/icon.png");
-						create_and_request_file("sd:/apps/", "homebrew_browser", "/loop.mod");
-					}
-					else {
-						create_and_request_file("usb:/apps/", "homebrew_browser", "/meta.xml");
-						create_and_request_file("usb:/apps/", "homebrew_browser", "/icon.png");
-						create_and_request_file("usb:/apps/", "homebrew_browser", "/loop.mod");
-					}
+					download_file("homebrew_browser", "meta.xml");
+					download_file("homebrew_browser", "icon.png");
+					download_file("homebrew_browser", "loop.mod");
+
 					printf("\nThe Homebrew Browser has been installed.\n\n");
 					hbb_updating = false;
 					running_update = false;
@@ -2965,199 +2820,103 @@ void update_check() {
 				WPAD_ScanPads();
 				u32 pressed = WPAD_ButtonsDown(0);
 
-				// Grab the latest HBB
-				if (pressed & WPAD_BUTTON_A) {
-					hbb_updating = true;
-
-					printf("Retrieving the latest version of the Homebrew Browser...\n");
-
-					// Delete boot.bak if it exists
-					if (setting_use_sd == true) {
-						remove_file("sd:/apps/homebrew_browser/boot.bak");
-					}
-					else {
-						remove_file("usb:/apps/homebrew_browser/boot.bak");
-					}
-
-					if (setting_use_sd == true) {
-
-						// Rename the old HBB boot file to boot.bak
-						if (rename("sd:/apps/homebrew_browser/boot.dol", "sd:/apps/homebrew_browser/boot.bak") == 0) {
-
-							// Download the new dol file
-							create_and_request_file("sd:/apps/", "homebrew_browser", "/boot.dol");
-
-							// Check to see if size matches, if so remove boot.bak, if not report error
-							f = fopen("sd:/apps/homebrew_browser/boot.dol", "rb");
-
-							if (f == NULL) {
-								printf("\n\nCould not open the updated Homebrew Browser boot.dol file.\n");
-								remove_file("sd:/apps/homebrew_browser/boot.dol");
-								rename("sd:/apps/homebrew_browser/boot.bak", "sd:/apps/homebrew_browser/boot.dol");
-								printf("The previous version of Homebrew Browser has been restored.\n\n");
-								sleep(5);
-								running_update = false;
-							}
-							else {
-								// Open file
-								fseek (f , 0, SEEK_END);
-								long local_hb_size = ftell (f);
-								rewind (f);
-								fclose(f);
-
-								if (local_hb_size == remote_hb_size) {
-
-									strcpy(temp_name, "0");
-
-									char savexml[150] = "sd:/apps/homebrew_browser/meta.xml";
-
-									FILE *fx = fopen(savexml, "rb");
-									if (fx != NULL) {
-										mxml_node_t *tree;
-										tree = mxmlLoadFile(NULL, fx, MXML_OPAQUE_CALLBACK);
-										fclose(fx);
-
-										mxml_node_t *thename = mxmlFindElement(tree, tree, "name", NULL, NULL, MXML_DESCEND);
-										if (thename == NULL) { strcpy(temp_name, "Homebrew Browser"); }
-										else { strcpy(temp_name, thename->child->value.opaque); }
-										mxmlDelete(tree);
-									}
-
-									rename("sd:/apps/homebrew_browser/meta.xml", "sd:/apps/homebrew_browser/meta.bak");
-									create_and_request_file("sd:/apps/", "homebrew_browser", "/meta.xml");
-
-									fx = fopen(savexml, "rb");
-									if (fx != NULL) {
-										mxml_node_t *tree1;
-										tree1 = mxmlLoadFile(NULL, fx, MXML_OPAQUE_CALLBACK);
-										fclose(fx);
-
-										mxml_node_t *thename1 = mxmlFindElement(tree1, tree1, "name", NULL, NULL, MXML_DESCEND);
-										mxmlSetOpaque(thename1->child, temp_name);
-
-										fx = fopen(savexml, "wb");
-										if (fx != NULL) {
-											mxmlSaveFile(tree1, fx, 0);
-										}
-										fclose(fx);
-
-										mxmlDelete(tree1);
-									}
-
-									create_and_request_file("sd:/apps/", "homebrew_browser", "/icon.png");
-
-									printf("\nLatest version of the Homebrew Browser has been installed. Now returning you to the HBC.\n");
-									die(0);
-								}
-								else {
-									printf("\n\nThe updated Homebrew Browser boot.dol file is a different size(%li) than expected (%li).\n", local_hb_size, remote_hb_size);
-									remove_file("sd:/apps/homebrew_browser/boot.dol");
-									rename("sd:/apps/homebrew_browser/boot.bak", "sd:/apps/homebrew_browser/boot.dol");
-									remove_file("sd:/apps/homebrew_browser/meta.xml");
-									rename("sd:/apps/homebrew_browser/meta.bak", "sd:/apps/homebrew_browser/meta.xml");
-									printf("The previous version of Homebrew Browser has been restored.\n\n");
-									sleep(5);
-									running_update = false;
-								}
-							}
-						}
-						else {
-							printf("Couldn't rename boot.dol to boot.bak, can't update to latest version.\n\n");
-							running_update = false;
-						}
-
-					}
-					else {
-
-						// Rename the old HBB boot file to boot.bak
-						if (rename("usb:/apps/homebrew_browser/boot.dol", "usb:/apps/homebrew_browser/boot.bak") == 0) {
-
-							// Download the new dol file
-							create_and_request_file("usb:/apps/", "homebrew_browser", "/boot.dol");
-
-							// Check to see if size matches, if so remove boot.bak, if not report error
-							f = fopen("usb:/apps/homebrew_browser/boot.dol", "rb");
-
-							if (f == NULL) {
-								printf("\n\nCould not open the updated Homebrew Browser boot.dol file.\n");
-								remove_file("usb:/apps/homebrew_browser/boot.dol");
-								rename("usb:/apps/homebrew_browser/boot.bak", "usb:/apps/homebrew_browser/boot.dol");
-								printf("The previous version of Homebrew Browser has been restored.\n\n");
-								sleep(5);
-								running_update = false;
-							}
-							else {
-								// Open file
-								fseek (f , 0, SEEK_END);
-								long local_hb_size = ftell (f);
-								rewind (f);
-								fclose(f);
-
-								if (local_hb_size == remote_hb_size) {
-
-									strcpy(temp_name, "0");
-
-									char savexml[150] = "usb:/apps/homebrew_browser/meta.xml";
-
-									FILE *fx = fopen(savexml, "rb");
-									if (fx != NULL) {
-										mxml_node_t *tree;
-										tree = mxmlLoadFile(NULL, fx, MXML_OPAQUE_CALLBACK);
-										fclose(fx);
-
-										mxml_node_t *thename = mxmlFindElement(tree, tree, "name", NULL, NULL, MXML_DESCEND);
-										if (thename == NULL) { strcpy(temp_name, "Homebrew Browser"); }
-										else { strcpy(temp_name, thename->child->value.opaque); }
-										mxmlDelete(tree);
-									}
-
-									rename("usb:/apps/homebrew_browser/meta.xml", "usb:/apps/homebrew_browser/meta.bak");
-									create_and_request_file("usb:/apps/", "homebrew_browser", "/meta.xml");
-
-									fx = fopen(savexml, "rb");
-									if (fx != NULL) {
-										mxml_node_t *tree1;
-										tree1 = mxmlLoadFile(NULL, fx, MXML_OPAQUE_CALLBACK);
-										fclose(fx);
-
-										mxml_node_t *thename1 = mxmlFindElement(tree1, tree1, "name", NULL, NULL, MXML_DESCEND);
-										mxmlSetOpaque(thename1->child, temp_name);
-
-										fx = fopen(savexml, "wb");
-										if (fx != NULL) {
-											mxmlSaveFile(tree1, fx, 0);
-										}
-										fclose(fx);
-
-										mxmlDelete(tree1);
-									}
-
-									create_and_request_file("usb:/apps/", "homebrew_browser", "/icon.png");
-
-									printf("\nLatest version of the Homebrew Browser has been installed. Now returning you to the HBC.\n");
-									die(0);
-								}
-								else {
-									printf("\n\nThe updated Homebrew Browser boot.dol file is a different size(%li) than expected (%li).\n", local_hb_size, remote_hb_size);
-									remove_file("usb:/apps/homebrew_browser/boot.dol");
-									rename("usb:/apps/homebrew_browser/boot.bak", "usb:/apps/homebrew_browser/boot.dol");
-									remove_file("usb:/apps/homebrew_browser/meta.xml");
-									rename("usb:/apps/homebrew_browser/meta.bak", "usb:/apps/homebrew_browser/meta.xml");
-									printf("The previous version of Homebrew Browser has been restored.\n\n");
-									sleep(5);
-									running_update = false;
-								}
-							}
-						}
-						else {
-							printf("Couldn't rename boot.dol to boot.bak, can't update to latest version.\n\n");
-							running_update = false;
-						}
-					}
-
-				}
-				else if (pressed & WPAD_BUTTON_B) {
+				if (pressed & WPAD_BUTTON_B) {
 					printf("Skipping update of the Homebrew Browser.\n\n");
+					running_update = false;
+					break;
+				}
+
+				if (!(pressed & WPAD_BUTTON_A)) {
+					// We expect A to continue with our update logic.
+					break;
+				}
+
+				// Grab the latest HBB
+				hbb_updating = true;
+
+				printf("Retrieving the latest version of the Homebrew Browser...\n");
+
+				// Delete boot.bak if it exists
+				remove_file(boot_bak_path);
+
+				// Rename the old HBB boot file to boot.bak
+				if (rename(boot_dol_path, boot_bak_path) == 0) {
+					// Download the new dol file
+					download_file("homebrew_browser", "boot.dol");
+
+					// Check to see if size matches, if so remove boot.bak, if not report error
+					f = hbb_fopen("boot.dol", "rb");
+
+					if (f == NULL) {
+						printf("\n\nCould not open the updated Homebrew Browser boot.dol file.\n");
+						remove_file(boot_dol_path);
+						rename(boot_bak_path, boot_dol_path);
+						printf("The previous version of Homebrew Browser has been restored.\n\n");
+						sleep(5);
+						running_update = false;
+					} else {
+						// Open file
+						fseek (f , 0, SEEK_END);
+						long local_hb_size = ftell (f);
+						rewind (f);
+						fclose(f);
+
+						if (local_hb_size == remote_hb_size) {
+							strcpy(temp_name, "0");
+
+							FILE *fx = fopen(meta_xml_path, "rb");
+							if (fx != NULL) {
+								mxml_node_t *tree;
+								tree = mxmlLoadFile(NULL, fx, MXML_OPAQUE_CALLBACK);
+								fclose(fx);
+
+								mxml_node_t *thename = mxmlFindElement(tree, tree, "name", NULL, NULL, MXML_DESCEND);
+								if (thename == NULL) {
+									strcpy(temp_name, "Homebrew Browser");
+								} else {
+									strcpy(temp_name, thename->child->value.opaque);
+								}
+								mxmlDelete(tree);
+							}
+
+							rename(meta_xml_path, meta_bak_path);
+							download_file("homebrew_browser", "meta.xml");
+
+							fx = fopen(meta_xml_path, "rb");
+							if (fx != NULL) {
+								mxml_node_t *tree1;
+								tree1 = mxmlLoadFile(NULL, fx, MXML_OPAQUE_CALLBACK);
+								fclose(fx);
+
+								mxml_node_t *thename1 = mxmlFindElement(tree1, tree1, "name", NULL, NULL, MXML_DESCEND);
+								mxmlSetOpaque(thename1->child, temp_name);
+
+								fx = fopen(meta_xml_path, "wb");
+								if (fx != NULL) {
+									mxmlSaveFile(tree1, fx, 0);
+								}
+								fclose(fx);
+
+								mxmlDelete(tree1);
+							}
+
+							download_file("homebrew_browser", "icon.png");
+
+							printf("\nLatest version of the Homebrew Browser has been installed. Now returning you to the HBC.\n");
+							die(0);
+						} else {
+							printf("\n\nThe updated Homebrew Browser boot.dol file is a different size(%li) than expected (%li).\n", local_hb_size, remote_hb_size);
+							remove_file(boot_dol_path);
+							rename(boot_bak_path, boot_dol_path);
+							remove_file(meta_xml_path);
+							rename(meta_bak_path, meta_xml_path);
+							printf("The previous version of Homebrew Browser has been restored.\n\n");
+							sleep(5);
+							running_update = false;
+						}
+					}
+				} else {
+					printf("Couldn't rename boot.dol to boot.bak, can't update to latest version.\n\n");
 					running_update = false;
 				}
 			}
@@ -3166,6 +2925,11 @@ void update_check() {
 			printf("No updates available.\n");
 		}
 	}
+
+	free(boot_dol_path);
+	free(boot_bak_path);
+	free(meta_xml_path);
+	free(meta_bak_path);
 }
 
 // Request the homebrew list
@@ -3984,5 +3748,83 @@ s32 create_and_request_file(char* path1, char* appname, char *filename) {
 
 	//printf("Received %s%s.\n", appname, filename);
 
+	return 1;
+}
+
+// Downloads the given filename for this Homebrew application.
+s32 download_file(char* appname, char *filename) {
+	char* path = app_path(appname, filename);
+	printf("Called with app %s and filename %s\n", appname, filename);
+	printf("Attempting to eventually write to %s\n", path);
+
+	int success = create_parent_dirs(path);
+	if (success != 1) {
+		// Failed to create parent dirs
+		printf("Could not create directories for %s.\n", path);
+		free(path);
+		return -1; 
+	}
+
+	s32 result = 0;
+	int retry_times = 0;
+
+	FILE *f;
+
+	// Try to get the file, if failed for a 3rd time, then return -1
+	while (result != 1) {
+		// Sleep for a little bit so we don't do all 3 requests at once
+		if (retry_times > 1) {
+			sleep(2);
+		}
+		else if (retry_times > 3) {
+			sleep(3);
+		}
+
+		// Open file
+		f = fopen(path, "wb");
+
+		// If file can't be created
+		if (f == NULL) {
+			printf("There was a problem accessing the file %s.\n", path);
+			return -1;
+		}
+
+		char* subdirectory = NULL;
+		if (setting_repo == 0) {
+			// With the default servers, we should assume /hbb/.
+			subdirectory = "/hbb/";
+		} else {
+			subdirectory = repo_list[setting_repo].apps_dir;
+		}
+
+		// subdirectory + app name + slash (1) + filename + null terminator (1)
+		int length = strlen(subdirectory) + strlen(appname) + strlen(filename) + 2;
+		char* url_path = (char *)malloc(length);
+		strlcpy(url_path, subdirectory, length);
+		strlcat(url_path, appname, length);
+		strlcat(url_path, "/", length);
+		strlcat(url_path, filename, length);
+
+		result = request_file(url_path, f);
+		
+		free(url_path);
+
+		retry_times++;
+
+		fclose(f);
+
+		// User cancelled download
+		if (result == -2) {
+			free(path);
+			return -1;
+		}
+
+		if (retry_times >= 6) {
+			free(path);
+			return -1;
+		}
+	}
+
+	free(path);
 	return 1;
 }
