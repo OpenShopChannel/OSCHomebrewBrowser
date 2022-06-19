@@ -138,7 +138,6 @@ void apps_check();
 void save_xml_name();
 void copy_xml_name();
 void repo_check();
-void add_to_log(char* text, ...);
 
 struct homebrew_struct {
 	char name[100];

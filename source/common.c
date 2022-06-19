@@ -172,18 +172,15 @@ static void *run_reset_thread(void *arg) {
 		if (WPAD_ButtonsHeld(0) & WPAD_BUTTON_1 || PAD_ButtonsDown(0) & PAD_BUTTON_Y) {
 			setting_online = false;
 			printf("\nNow working in offline mode.\n");
-			//add_to_log("Now working in offline mode.");
 		}
 		if (WPAD_ButtonsHeld(0) & WPAD_BUTTON_2 || PAD_ButtonsDown(0) & PAD_BUTTON_X) {
 			setting_repo_revert = true;
 			setting_repo = 0;
 			printf("\nReverting to OSCWii.org repository.\n");
-			//add_to_log("Reverting to CodeMii.com repository.");
 		}
 		if (WPAD_ButtonsHeld(0) & WPAD_BUTTON_B || PAD_ButtonsDown(0) & PAD_BUTTON_B) {
 			cancel_download = true;
 			cancel_extract = true;
-			//add_to_log("Cancelling download/extract.");
 		}
 	}
 	printf("\nHomebrew Browser shutting down...\n");
@@ -1382,23 +1379,6 @@ void load_no_manage_list() {
 	fclose(fl);
 }
 
-// Add text to log
-void add_to_log(char* text, ...) {
-
-	va_list args;
-	va_start (args, text);
-
-	char log_file[60];
-	strcpy(log_file, rootdir);
-	strcat(log_file, "/apps/homebrew_browser/log.txt");
-	FILE *flog = fopen(log_file, "a");
-	vfprintf (flog, text, args);
-	fputs ("\r\n", flog);
-	fclose(flog);
-
-	va_end (args);
-}
-
 // Save the meta.xml "name" element
 void save_xml_name() {
 
@@ -1999,10 +1979,7 @@ void initialise() {
 	MP3Player_Init();
 	// Initialise the audio
 	ASND_Init();
-	//AESND_Init(NULL);
-	//MODPlay_Init(&play);
 	xfb_height = vmode->xfbHeight;
-	//add_to_log("Initialise complete.");
 }
 
 bool initialize_networking() {
