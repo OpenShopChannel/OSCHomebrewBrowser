@@ -12,6 +12,7 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #define _COMMON_H_
 
 #include <ogcsys.h>
+#include <stdio.h>
 #include "GRRLIB/GRRLIB.h"
 
 #define COLOUR_WHITE 0xFFFFFF
@@ -37,12 +38,8 @@ u8 initialise_download();
 u8 initialise_delete();
 u8 initialise_rating();
 u8 initialise_update_rating();
-u8 initialise_music();
 u8 initialise_request();
 void suspend_reset_thread();
-void initialise_mod_music();
-void stop_mod_music();
-void play_mod_music();
 
 void die(char *msg);
 void initialise();

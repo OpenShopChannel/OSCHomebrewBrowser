@@ -36,6 +36,7 @@ ftpii Source Code Copyright (C) 2008 Joseph Jordan <joe.ftpii@psychlaw.com.au>
 #include "GRRLIB_font1_png.h"
 #include <dirent.h>
 #include <sys/statvfs.h>
+#include "music_player.h"
 
 #include "mouse_png.h"
 #include "about_blank_png.h"
