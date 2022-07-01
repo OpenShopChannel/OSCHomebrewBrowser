@@ -2766,7 +2766,7 @@ s32 request_list() {
 	}
 	// Open file and check file length for changes
 	else {
-		fseek (f , 0, SEEK_END);
+		fseek (f, 0, SEEK_END);
 		long file_check = ftell (f);
 		rewind (f);
 
@@ -3371,16 +3371,22 @@ s32 request_file(char* path, FILE *f) {
 
 	// Download!
 	CURLcode res = handle_download_request(url, f, download_progress_handler);
+	if (res == CURLE_OK) {
+		// Success!
+		return 1;
+	}
+
 	if (res == CURLE_ABORTED_BY_CALLBACK) {
 		// The user pressed cancel.
 		return -2;
 	} else if (res == CURLE_WRITE_ERROR) {
 		// An error occurred while writing the file.
 		return -1;
+	} else {
+		// Unknown...
+		// TODO: properly display error
+		return -1;
 	}
-
-	// Success!
-	return 1;
 }
 
 
