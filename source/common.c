@@ -214,7 +214,7 @@ static void *run_icons_thread(void *arg) {
 		bool update_img_file = false;
 
 		char img_path[150];
-		strcpy(img_path, "apps/homebrew_browser/temp/");
+		strcpy(img_path, "temp/");
 		strcat(img_path, total_list[x].name);
 		strcat(img_path, ".png");
 
@@ -3204,24 +3204,6 @@ s32 request_list() {
 								fclose(f);
 							}
 						}
-
-						// Check if in no managed list
-						/*if (homebrew_list[array_count].local_app_size > 0) {
-							int d = 0;
-							for (d = 0; d < no_manage_count; d++) {
-								char testname[100];
-								strcpy(testname, homebrew_list[array_count].name);
-								int leng=strlen(testname);
-								int z;
-								for(z=0; z<leng; z++)
-									if (97<=testname[z] && testname[z]<=122)//a-z
-										testname[z]-=32;
-
-								if (strcmp(no_manage_list[d].name, testname) == 0) {
-									homebrew_list[array_count].no_manage = true;
-								}
-							}
-						}*/
 
 						// Total app size
 						split_tok = strtok (NULL, " ");
